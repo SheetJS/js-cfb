@@ -300,8 +300,8 @@ function read_directory(idx) {
 		o.child = read(4); if(o.child === NOSTREAM) delete o.child;
 		o.clsid = read(16);
 		o.state = read(4);
-		o.ctime = read(8);
-		o.mtime = read(8);
+		var ctime = read(8); if(ctime != "0000000000000000") o.ctime = ctime;
+		var mtime = read(8); if(mtime != "0000000000000000") o.mtime = mtime;
 		o.start = read(4);
 		o.size = read(4);
 		if(o.type === 'root') { //root entry
@@ -318,6 +318,16 @@ function read_directory(idx) {
 			w = o.start * mssz;
 			o.content = sector_list[minifat_store].data.slice(w,w+o.size);
 			prep_blob(o.content);
+		}
+		if(o.ctime) {
+			var ct = blob.slice(blob.l-24, blob.l-16);
+			var c2 = (ct.readUInt32LE(4)/1e7)*Math.pow(2,32)+ct.readUInt32LE(0)/1e7;
+			o.ct = new Date((c2 - 11644473600)*1000);
+		}
+		if(o.mtime) {
+			var mt = blob.slice(blob.l-16, blob.l-8);
+			var m2 = (mt.readUInt32LE(4)/1e7)*Math.pow(2,32)+mt.readUInt32LE(0)/1e7;
+			o.mt = new Date((m2 - 11644473600)*1000);
 		}
 		files[name] = o;
 	}
