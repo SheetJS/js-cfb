@@ -1,6 +1,7 @@
 /* vim: set ts=2: */
 /*jshint eqnull:true */
 
+/** Helper Functions */
 function readIEEE754(buf, idx, isLE, nl, ml) {
 	if(isLE === undefined) isLE = true;
 	if(!nl) nl = 8;
@@ -87,6 +88,7 @@ Array.prototype.utf8 = function(s,e) { var str = ""; for(var i=s; i<e; i++) str 
 
 function bconcat(bufs) { return (typeof Buffer !== 'undefined') ? Buffer.concat(bufs) : [].concat.apply([], bufs); }
 
+/** Buffer helpers -- keep track of read location `.l` and move it */
 function ReadShift(size, t) {
 	var o, w, vv; t = t || 'u';
 	if(size === 'ieee754') { size = 8; t = 'f'; }
@@ -108,7 +110,6 @@ function CheckField(hexstr, fld) {
 	if(m !== hexstr) throw (fld||"") + 'Expected ' + hexstr + ' saw ' + m;
 	this.l += hexstr.length/2;
 }
-
 function WarnField(hexstr, fld) {
 	var m = this.slice(this.l, this.l+hexstr.length/2).hexlify('hex');
 	if(m !== hexstr) console.error((fld||"") + 'Expected ' + hexstr +' saw ' + m);
@@ -122,7 +123,7 @@ function prep_blob(blob, pos) {
 	return [read, chk];
 }
 
-/* [MS-CFB] v20120705 */
+/* [MS-CFB] v20130118 */
 var CFB = (function(){
 function parse(file) {
 
@@ -279,7 +280,7 @@ sector_list[dir_start].name = "!Directory";
 if(nmfs > 0) sector_list[minifat_start].name = "!MiniFAT";
 sector_list[fat_addrs[0]].name = "!FAT";
 
-/** read directory structure */
+/* [MS-CFB] 2.6.1 Compound File Directory Entry */
 var files = {}, Paths = [];
 function read_directory(idx) {
 	var blob, read;
@@ -371,19 +372,29 @@ return this;
 
 /** CFB Constants */
 {
+	/* 2.1 Compund File Sector Numbers and Types */
 	var MAXREGSECT = 0xFFFFFFFA;
 	var DIFSECT = 0xFFFFFFFC;
 	var FATSECT = 0xFFFFFFFD;
 	var ENDOFCHAIN = 0xFFFFFFFE;
 	var FREESECT = 0xFFFFFFFF;
+	/* 2.2 Compound File Header */
 	var HEADER_SIGNATURE = 'd0cf11e0a1b11ae1';
 	var HEADER_MINOR_VERSION = '3e00';
 	var MAXREGSID = 0xFFFFFFFA;
 	var NOSTREAM = 0xFFFFFFFF;
 	var HEADER_CLSID = '00000000000000000000000000000000';
-
+	/* 2.6.1 Compound File Directory Entry */
 	var EntryTypes = ['unknown','storage','stream',null,null,'root'];
 }
+
+var CFB_utils = {
+	ReadShift: ReadShift,
+	WarnField: WarnField,
+	CheckField: CheckField,
+	prep_blob: prep_blob,	
+	bconcat: bconcat
+};
 
 if(typeof require !== 'undefined' && typeof exports !== 'undefined') {
 	Array.prototype.toBuffer = function() {
@@ -392,6 +403,7 @@ if(typeof require !== 'undefined' && typeof exports !== 'undefined') {
 	var fs = require('fs');
 	exports.read = CFB.read;
 	exports.parse = CFB.parse;
+	exports.utils = CFB_utils;
 	exports.main = function(args) {
 		var cfb = CFB.read(args[0], {type:'file'});
 		console.log(cfb);
