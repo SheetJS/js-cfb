@@ -103,11 +103,11 @@ function ReadShift(size, t) {
 		case 'utf8': size = t; o = this.utf8(this.l, this.l + size); break;
 		case 'utf16le': size = 2*t; o = this.utf16le(this.l, this.l + size); break;
 
-		case 'cstr': size = 0, o = "";
-			while((w=this.readUInt8(this.l + size++))!=0) o+= String.fromCharCode(w);
+		case 'cstr': size = 0; o = "";
+			while((w=this.readUInt8(this.l + size++))!==0) o+= String.fromCharCode(w);
 			break;
-		case 'wstr': size = 0, o = "";
-			while((w=this.readUInt16LE(this.l +size))!=0) o+= String.fromCharCode(w),size+=2;
+		case 'wstr': size = 0; o = "";
+			while((w=this.readUInt16LE(this.l +size))!==0){o+= String.fromCharCode(w);size+=2;}
 			size+=2; break;
 	}
 	this.l+=size; return o;
@@ -156,8 +156,8 @@ var fat_addrs = []; // locations of FAT sectors
 var blob = file.slice(0,512);
 prep_blob(blob);
 var read = ReadShift.bind(blob), chk = CheckField.bind(blob);
-var wrn = WarnField.bind(blob);
-var j = 0;
+//var wrn = WarnField.bind(blob);
+var j = 0, q;
 
 // header signature 8
 chk(HEADER_SIGNATURE, 'Header Signature: ');
@@ -290,9 +290,9 @@ sector_list[fat_addrs[0]].name = "!FAT";
 /* [MS-CFB] 2.6.1 Compound File Directory Entry */
 var files = {}, Paths = [];
 function read_directory(idx) {
-	var blob, read;
+	var blob, read, w;
 	var sector = sector_list[idx].data;
-	for(var i = 0; i != sector.length; i+= 128, l = 64) {
+	for(var i = 0; i != sector.length; i+= 128) {
 		blob = sector.slice(i, i+128);
 		prep_blob(blob, 64);
 		read = ReadShift.bind(blob);
