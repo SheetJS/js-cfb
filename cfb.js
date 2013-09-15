@@ -102,6 +102,13 @@ function ReadShift(size, t) {
 
 		case 'utf8': size = t; o = this.utf8(this.l, this.l + size); break;
 		case 'utf16le': size = 2*t; o = this.utf16le(this.l, this.l + size); break;
+
+		case 'cstr': size = 0, o = "";
+			while((w=this.readUInt8(this.l + size++))!=0) o+= String.fromCharCode(w);
+			break;
+		case 'wstr': size = 0, o = "";
+			while((w=this.readUInt16LE(this.l +size))!=0) o+= String.fromCharCode(w),size+=2;
+			size+=2; break;
 	}
 	this.l+=size; return o;
 }
