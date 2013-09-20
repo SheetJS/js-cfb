@@ -288,7 +288,7 @@ if(nmfs > 0) sector_list[minifat_start].name = "!MiniFAT";
 sector_list[fat_addrs[0]].name = "!FAT";
 
 /* [MS-CFB] 2.6.1 Compound File Directory Entry */
-var files = {}, Paths = [];
+var files = {}, Paths = [], FileIndex = [], FullPaths = [], FullPathDir = {};
 function read_directory(idx) {
 	var blob, read, w;
 	var sector = sector_list[idx].data;
@@ -338,9 +338,40 @@ function read_directory(idx) {
 			o.mt = new Date((m2 - 11644473600)*1000);
 		}
 		files[name] = o;
+		FileIndex.push(o);
 	}
 }
 read_directory(dir_start);
+
+function build_full_paths(Dir, pathobj, paths, patharr) {
+	var i;
+	var dad = new Array(patharr.length);
+
+	var q = new Array(patharr.length);
+
+	for(i=0; i != dad.length; ++i) { dad[i]=q[i]=i; paths[i]=patharr[i]; }
+
+	for(i = q[0]; q.length !== 0; i = q.shift()) {
+		if(Dir[i].child) dad[Dir[i].child] = i;
+		if(Dir[i].left) { dad[Dir[i].left] = dad[i]; q.push(Dir[i].left); }
+		if(Dir[i].right) { dad[Dir[i].right] = dad[i]; q.push(Dir[i].right); }
+	}
+
+	for(i=1; i !== paths.length; ++i) {
+		var j = dad[i];
+		if(j === 0) paths[i] = paths[0] + "/" + paths[i];
+		else while(j != 0) {
+			paths[i] = paths[j] + "/" + paths[i];
+			j = dad[j];
+		}
+		dad[i] = 0;
+	}
+
+	paths[0] += "/";
+	for(i=1; i !== paths.length; ++i) if(Dir[i].type !== 'stream') paths[i] += "/";
+	for(i=0; i !== paths.length; ++i) pathobj[paths[i]] = FileIndex[i];
+}
+build_full_paths(FileIndex, FullPathDir, FullPaths, Paths);
 
 var root_name = Paths.shift();
 Paths.root = root_name;
@@ -348,6 +379,9 @@ Paths.root = root_name;
 var rval = {
 	raw: {header: header, sectors: sectors},
 	Paths: Paths,
+	FileIndex: FileIndex,
+	FullPaths: FullPaths,
+	FullPathDir: FullPathDir,
 	Directory: files
 };
 

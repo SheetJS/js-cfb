@@ -1,6 +1,6 @@
 {
 	"name": "cfb",
-	"version": "0.2.1",
+	"version": "0.3.0",
 	"author": "Niggler",
 	"description": "Compound File Binary File Format extractor",
 	"keywords": [ "cfb", "compression", "office" ],

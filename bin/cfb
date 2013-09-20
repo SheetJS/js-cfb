@@ -2,44 +2,24 @@
 
 var CFB = require('../cfb');
 var args = process.argv.slice(2);
+
+if(args.length === 0 || !require('fs').existsSync(args[0])) {
+	console.error("Usage: " + process.argv[1] + " <cfb_file>");
+	process.exit(1);
+}
+
 var cfb = CFB.read(args[0], {type:'file'});
-cfb.Paths.unshift(cfb.Paths.root);
-
-var dir = cfb.Directory;
-
-var dad = new Array(cfb.Paths.length);
-var paths = new Array(cfb.Paths.length);
-
-var q = new Array(paths.length);
-
-for(var i=0; i != dad.length; ++i) { dad[i]=q[i]=i; paths[i]=cfb.Paths[i]; }
-
-for(var i = q[0]; q.length != 0; i = q.shift()) {
-	if(dir[paths[i]].child) dad[dir[paths[i]].child] = i;
-	if(dir[paths[i]].left) { dad[dir[paths[i]].left] = dad[i]; q.push(dir[paths[i]].left); }
-	if(dir[paths[i]].right) { dad[dir[paths[i]].right] = dad[i]; q.push(dir[paths[i]].right); }
+if(args[1] === "-q") {
+	console.log(cfb);
+	return;
 }
-
-for(var i=1; i != paths.length; ++i) {
-	var j = dad[i];
-	if(j === 0) paths[i] = paths[0] + "/" + paths[i];
-	else while(j != 0) {
-		paths[i] = paths[j] + "/" + paths[i];
-		j = dad[j];
-	}
-	dad[i] = 0;
-}
-
-paths[0] += "/";
-for(var i=1; i != paths.length; ++i) if(dir[cfb.Paths[i]].type != 'stream') paths[i] += "/";
-
 var fs = require('fs');
-for(var i=0; i != paths.length; ++i) {
-	if(paths[i].slice(-1) === "/") {
-		console.error("mkdir " + paths[i]);
-		fs.mkdirSync(paths[i]);
+for(var i=0; i != cfb.FullPaths.length; ++i) {
+	if(cfb.FullPaths[i].slice(-1) === "/") {
+		console.error("mkdir " + cfb.FullPaths[i]);
+		fs.mkdirSync(cfb.FullPaths[i]);
 	} else {
-		console.error("writing " + paths[i]);
-		fs.writeFile(paths[i], dir[cfb.Paths[i]].content);
+		console.error("writing " + cfb.FullPaths[i]);
+		fs.writeFileSync(cfb.FullPaths[i], cfb.FileIndex[i].content);
 	}
 }
