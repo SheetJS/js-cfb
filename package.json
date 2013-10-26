@@ -1,6 +1,6 @@
 {
 	"name": "cfb",
-	"version": "0.3.0",
+	"version": "0.4.0",
 	"author": "Niggler",
 	"description": "Compound File Binary File Format extractor",
 	"keywords": [ "cfb", "compression", "office" ],
@@ -9,6 +9,9 @@
 	},
 	"main": "./cfb",
 	"repository": { "type":"git", "url":"git://github.com/Niggler/js-cfb.git" },
+	"scripts": {
+		"test": "make test"
+	},
 	"bugs": { "url": "https://github.com/Niggler/js-cfb/issues" },
 	"license": "Apache 2.0"	
 }

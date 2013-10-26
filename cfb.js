@@ -112,16 +112,19 @@ function ReadShift(size, t) {
 	}
 	this.l+=size; return o;
 }
+
 function CheckField(hexstr, fld) {
 	var m = this.slice(this.l, this.l+hexstr.length/2).hexlify('hex');
 	if(m !== hexstr) throw (fld||"") + 'Expected ' + hexstr + ' saw ' + m;
 	this.l += hexstr.length/2;
 }
+
 function WarnField(hexstr, fld) {
 	var m = this.slice(this.l, this.l+hexstr.length/2).hexlify('hex');
 	if(m !== hexstr) console.error((fld||"") + 'Expected ' + hexstr +' saw ' + m);
 	this.l += hexstr.length/2;
 }
+
 function prep_blob(blob, pos) {
 	blob.read_shift = ReadShift.bind(blob);
 	blob.chk = CheckField;
@@ -237,9 +240,9 @@ for(j = 0; blob.l != 512; ) {
 
 
 /** Break the file up into sectors */
-if(file.length%ssz!==0) throw "File Length: Expected multiple of "+ssz;
+if(file.length%ssz!==0) console.error("CFB: size " + file.length + " % "+ssz);
 
-var nsectors = (file.length - ssz)/ssz;
+var nsectors = Math.ceil((file.length - ssz)/ssz);
 var sectors = [];
 for(var i=1; i != nsectors + 1; ++i) sectors[i-1] = file.slice(i*ssz,(i+1)*ssz);
 
@@ -250,12 +253,14 @@ function sleuth_fat(idx, cnt) {
 		if(cnt !== 0) throw "DIFAT chain shorter than expected";
 		return;
 	}
-	var sector = sectors[idx];
-	for(var i = 0; i != ssz/4-1; ++i) {
-		if((q = sector.readUInt32LE(i*4)) === ENDOFCHAIN) break;
-		fat_addrs.push(q);
+	if(idx !== FREESECT) {
+		var sector = sectors[idx];
+		for(var i = 0; i != ssz/4-1; ++i) {
+			if((q = sector.readUInt32LE(i*4)) === ENDOFCHAIN) break;
+			fat_addrs.push(q);
+		}
+		sleuth_fat(sector.readUInt32LE(ssz-4),cnt - 1);
 	}
-	sleuth_fat(sector.readUInt32LE(ssz-4),cnt - 1);
 }
 sleuth_fat(difat_start, ndfs);
 
@@ -284,7 +289,7 @@ for(i=0; i != sectors.length; ++i) {
 	sector_list[i].data = Array(buf.map(get_sector)).toBuffer();
 }
 sector_list[dir_start].name = "!Directory";
-if(nmfs > 0) sector_list[minifat_start].name = "!MiniFAT";
+if(nmfs > 0 && minifat_start !== ENDOFCHAIN) sector_list[minifat_start].name = "!MiniFAT";
 sector_list[fat_addrs[0]].name = "!FAT";
 
 /* [MS-CFB] 2.6.1 Compound File Directory Entry */
@@ -314,18 +319,26 @@ function read_directory(idx) {
 		o.size = read(4);
 		if(o.type === 'root') { //root entry
 			minifat_store = o.start;
-			if(nmfs > 0) sector_list[minifat_store].name = "!StreamData";
+			if(nmfs > 0 && minifat_store !== ENDOFCHAIN) sector_list[minifat_store].name = "!StreamData";
 			minifat_size = o.size;
 		} else if(o.size >= ms_cutoff_size) {
 			o.storage = 'fat';
+			try {
+				sector_list[o.start].name = o.name;
+				o.content = sector_list[o.start].data.slice(0,o.size);
+			} catch(e) {
+				o.start = o.start - 1;
 			sector_list[o.start].name = o.name;
 			o.content = sector_list[o.start].data.slice(0,o.size);
+			}
 			prep_blob(o.content);
 		} else {
 			o.storage = 'minifat';
 			w = o.start * mssz;
-			o.content = sector_list[minifat_store].data.slice(w,w+o.size);
-			prep_blob(o.content);
+			if(minifat_store !== ENDOFCHAIN) {
+				o.content = sector_list[minifat_store].data.slice(w,w+o.size);
+				prep_blob(o.content);
+			}
 		}
 		if(o.ctime) {
 			var ct = blob.slice(blob.l-24, blob.l-16);
@@ -351,13 +364,14 @@ function build_full_paths(Dir, pathobj, paths, patharr) {
 
 	for(i=0; i != dad.length; ++i) { dad[i]=q[i]=i; paths[i]=patharr[i]; }
 
-	for(i = q[0]; q.length !== 0; i = q.shift()) {
+	for(i = q[0]; typeof i !== "undefined"; i = q.shift()) {
 		if(Dir[i].child) dad[Dir[i].child] = i;
 		if(Dir[i].left) { dad[Dir[i].left] = dad[i]; q.push(Dir[i].left); }
 		if(Dir[i].right) { dad[Dir[i].right] = dad[i]; q.push(Dir[i].right); }
 	}
 
 	for(i=1; i !== paths.length; ++i) {
+		if(Dir[i].type === "unknown") continue;
 		var j = dad[i];
 		if(j === 0) paths[i] = paths[0] + "/" + paths[i];
 		else while(j != 0) {
@@ -426,14 +440,14 @@ return this;
 	var NOSTREAM = 0xFFFFFFFF;
 	var HEADER_CLSID = '00000000000000000000000000000000';
 	/* 2.6.1 Compound File Directory Entry */
-	var EntryTypes = ['unknown','storage','stream',null,null,'root'];
+	var EntryTypes = ['unknown','storage','stream','lockbytes','property','root'];
 }
 
 var CFB_utils = {
 	ReadShift: ReadShift,
 	WarnField: WarnField,
 	CheckField: CheckField,
-	prep_blob: prep_blob,	
+	prep_blob: prep_blob,
 	bconcat: bconcat
 };
 
