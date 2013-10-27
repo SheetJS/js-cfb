@@ -1,6 +1,9 @@
-.PHONY: init test clean
+.PHONY: init test lint clean
 test: init 
 	mocha -R spec
+
+lint:
+	jshint cfb.js
 
 init:
 	if [ ! -e test_files ]; then git clone https://github.com/Niggler/test_files; fi

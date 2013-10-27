@@ -243,7 +243,7 @@ for(j = 0; blob.l != 512; ) {
 var nsectors = Math.ceil((file.length - ssz)/ssz);
 var sectors = [];
 for(var i=1; i != nsectors; ++i) sectors[i-1] = file.slice(i*ssz,(i+1)*ssz);
-sectors[nsectors-1] = file.slice(nsectors*ssz)
+sectors[nsectors-1] = file.slice(nsectors*ssz);
 
 /** Chase down the rest of the DIFAT chain to build a comprehensive list
     DIFAT chains by storing the next sector number as the last 32 bytes */
@@ -327,8 +327,8 @@ function read_directory(idx) {
 				o.content = sector_list[o.start].data.slice(0,o.size);
 			} catch(e) {
 				o.start = o.start - 1;
-			sector_list[o.start].name = o.name;
-			o.content = sector_list[o.start].data.slice(0,o.size);
+				sector_list[o.start].name = o.name;
+				o.content = sector_list[o.start].data.slice(0,o.size);
 			}
 			prep_blob(o.content);
 		} else {
@@ -373,7 +373,7 @@ function build_full_paths(Dir, pathobj, paths, patharr) {
 		if(Dir[i].type === "unknown") continue;
 		var j = dad[i];
 		if(j === 0) paths[i] = paths[0] + "/" + paths[i];
-		else while(j != 0) {
+		else while(j !== 0) {
 			paths[i] = paths[j] + "/" + paths[i];
 			j = dad[j];
 		}
