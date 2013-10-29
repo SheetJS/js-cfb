@@ -4,7 +4,7 @@ This is a Pure-JS implementation of MS-CFB: Compound File Binary File Format, a
 format used in many Microsoft file types (such as XLS, DOC, and other Microsoft
 Office file types). 
 
-# Installation and Usage
+# Utility Installation and Usage
 
 The package is available on NPM:
 
@@ -17,6 +17,79 @@ The command will extract the storages and streams in the container, generating
 files that line up with the tree-based structure of the storage.  Metadata 
 such as the red-black tree are discarded (and in the future, new CFB containers
 will exclusively use black nodes)
+
+# Library Installation and Usage
+
+In the browser:
+
+    <script src="cfb.js" type="text/javascript"></script>
+
+In node:
+
+    var CFB = require('cfb');
+
+For example, to get the Workbook content from an XLS file:
+
+    var cfb = CFB.read(filename, {type: 'file'});
+    var has_vba = cfb.Directory['Workbook']
+
+## API
+
+The CFB object exposes the following methods and properties:
+
+`CFB.parse(blob)` takes a nodejs Buffer or an array of bytes and returns an
+parsed representation of the data.
+
+`CFB.read(blob, options)` wraps `parse`.  `options.type` controls the behavior:
+
+- `file`: `blob` should be a file name
+- `base64`: `blob` should be a base64 string
+- `binary`: `blob` should be a binary string
+
+## Container Object Description
+
+The object returned by `parse` and `read` can be found in the source (`rval`).
+It has the following properties and methods:
+
+- `.find(path)` performs a case-insensitive match for the path (or file name, if
+  there are no slashes) and returns an entry object (described later) or null if
+  not found 
+
+- `.FullPaths` is an array of the names of all of the streams (files) and 
+  storages (directories) in the container.  The paths are properly prefixed from
+  the root entry (so the entries are unique)
+
+- `.FullPathDir` is an object whose keys are entries in `.FullPaths` and whose
+  values are objects with metadata and content (described below)
+
+- `.FileIndex` is an array of the objects from `.FullPathDir`, in the same order
+  as `.FullPaths`.
+
+- `.raw` contains the raw header and sectors 
+
+- `.Paths` is an array of the names of all of the streams (files) and storages 
+  (directories) in the container.  There is no disambiguation in the case of
+  streams with the same name.
+
+- `.Directory` is an object whose keys are entries in `.Paths` and whose values
+  are objects with metadata and content.  Since collisions are not properly
+  handled here, `.FullPathDir` is the better option for new projects.
+
+## Entry Object Description
+
+The entry objects are available from `FullPathDir`, `FileIndex`, and `Directory`
+elements of the container object.
+
+- `.name` is the (case sensitive) internal name
+- `.type` is the type (`stream` for files, `storage` for dirs, `root` for root)
+- `.content` is a Buffer/Array with the raw content
+- `.ct`/`.mt` are the creation and modification time (if provided in file)
+
+# Notes
+
+Case comparison has not been verified for non-ASCII character
+
+Writing is not supported.  It is in the works, but it has not yet been released.
 
 # License
 
