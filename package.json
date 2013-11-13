@@ -1,17 +1,20 @@
 {
 	"name": "cfb",
-	"version": "0.6.0",
-	"author": "Niggler",
+	"version": "0.7.0",
+	"author": "SheetJS",
 	"description": "Compound File Binary File Format extractor",
 	"keywords": [ "cfb", "compression", "office" ],
 	"bin": {
 		"cfb": "./bin/cfb"
 	},
 	"main": "./cfb",
-	"repository": { "type":"git", "url":"git://github.com/Niggler/js-cfb.git" },
+	"repository": { "type":"git", "url":"git://github.com/SheetJS/js-cfb.git" },
 	"scripts": {
 		"test": "make test"
 	},
-	"bugs": { "url": "https://github.com/Niggler/js-cfb/issues" },
+	"dependencies": {
+		"commander":""
+	},
+	"bugs": { "url": "https://github.com/SheetJS/js-cfb/issues" },
 	"license": "Apache 2.0"	
 }

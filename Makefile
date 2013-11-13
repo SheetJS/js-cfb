@@ -6,7 +6,7 @@ lint:
 	jshint cfb.js
 
 init:
-	if [ ! -e test_files ]; then git clone https://github.com/Niggler/test_files; fi
+	if [ ! -e test_files ]; then git clone https://github.com/SheetJS/test_files; fi
 	cd test_files; make
 	
 clean:
