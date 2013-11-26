@@ -31,9 +31,11 @@ In node:
 For example, to get the Workbook content from an XLS file:
 
     var cfb = CFB.read(filename, {type: 'file'});
-    var has_vba = cfb.Directory['Workbook']
+    var workbook = cfb.find('Workbook')
 
-## API
+# API
+
+Typescript definitions are maintained in `misc/cfb.d.ts`.
 
 The CFB object exposes the following methods and properties:
 
@@ -67,18 +69,10 @@ It has the following properties and methods:
 
 - `.raw` contains the raw header and sectors 
 
-- `.Paths` is an array of the names of all of the streams (files) and storages 
-  (directories) in the container.  There is no disambiguation in the case of
-  streams with the same name.
-
-- `.Directory` is an object whose keys are entries in `.Paths` and whose values
-  are objects with metadata and content.  Since collisions are not properly
-  handled here, `.FullPathDir` is the better option for new projects.
-
 ## Entry Object Description
 
-The entry objects are available from `FullPathDir`, `FileIndex`, and `Directory`
-elements of the container object.
+The entry objects are available from `FullPathDir` and `FileIndex` elements of the 
+container object.
 
 - `.name` is the (case sensitive) internal name
 - `.type` is the type (`stream` for files, `storage` for dirs, `root` for root)

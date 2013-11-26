@@ -1,3 +1,4 @@
+/* cfb.js (C) 2013 SheetJS -- http://sheetjs.com */
 /* vim: set ts=2: */
 /*jshint eqnull:true */
 
@@ -397,11 +398,9 @@ function find_path(path) {
 
 var rval = {
 	raw: {header: header, sectors: sectors},
-	Paths: Paths,
 	FileIndex: FileIndex,
 	FullPaths: FullPaths,
 	FullPathDir: FullPathDir,
-	Directory: files,
 	find: find_path
 };
 
