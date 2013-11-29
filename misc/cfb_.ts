@@ -6,7 +6,7 @@
 var CFB = <CFB>require('../cfb');
 var fs = require('fs'), program = require('commander');
 program
-	.version('0.7.0')
+	.version('0.8.1')
 	.usage('[options] <file>')
 	.option('-q, --quiet', 'print but do not extract')
 	.parse(process.argv);
