@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<style>
+#drop{
+	border:2px dashed #bbb;
+	-moz-border-radius:5px;
+	-webkit-border-radius:5px;
+	border-radius:5px;
+	padding:25px;
+	text-align:center;
+	font:20pt bold,"Vollkorn";color:#bbb
+}
+#b64data{
+	width:100%;
+}
+</style>
+<b>JS-CFB Live Demo</b><br />
+
+<div id="drop">Drop an XLS file here to see the CFB structure.</div>
+<pre id="out"></pre>
+<br />
+<script src="cfb.js"></script>
+<script>
+function process_data(data) {
+	var output = "";
+	if(out.innerText === undefined) out.textContent = data.FullPaths;
+	else out.innerText = data.FullPaths.join("\n");
+}
+
+var drop = document.getElementById('drop');
+function handleDrop(e) {
+	e.stopPropagation();
+	e.preventDefault();
+	var files = e.dataTransfer.files;
+	var i,f;
+	for (i = 0, f = files[i]; i != files.length; ++i) {
+		var reader = new FileReader();
+		var name = f.name;
+		reader.onload = function(e) {
+			var data = e.target.result;
+			var cfb = CFB.read(data, {type: 'binary'});
+			process_data(cfb);
+		};
+		reader.readAsBinaryString(f);
+		//reader.readAsArrayBuffer(f);
+	}
+}
+
+function handleDragover(e) {
+	e.stopPropagation();
+	e.preventDefault();
+	e.dataTransfer.dropEffect = 'copy';
+}
+
+if(drop.addEventListener) {
+	drop.addEventListener('dragenter', handleDragover, false);
+	drop.addEventListener('dragover', handleDragover, false);
+	drop.addEventListener('drop', handleDrop, false);
+}
+</script>

@@ -9,7 +9,7 @@ function read_directory(idx) {
 		read = ReadShift.bind(blob);
 		var namelen = read(2);
 		if(namelen === 0) return;
-		var name = blob.utf16le(0,namelen-(Paths.length?2:0)); // OLE
+		var name = __utf16le(blob,0,namelen-(Paths.length?2:0)); // OLE
 		Paths.push(name);
 		var o = { name: name };
 		o.type = EntryTypes[read(1)];
@@ -43,12 +43,12 @@ function read_directory(idx) {
 		}
 		if(o.ctime) {
 			var ct = blob.slice(blob.l-24, blob.l-16);
-			var c2 = (ct.readUInt32LE(4)/1e7)*Math.pow(2,32)+ct.readUInt32LE(0)/1e7;
+			var c2 = (__readUInt32LE(ct,4)/1e7)*Math.pow(2,32)+__readUInt32LE(ct,0)/1e7;
 			o.ct = new Date((c2 - 11644473600)*1000);
 		}
 		if(o.mtime) {
 			var mt = blob.slice(blob.l-16, blob.l-8);
-			var m2 = (mt.readUInt32LE(4)/1e7)*Math.pow(2,32)+mt.readUInt32LE(0)/1e7;
+			var m2 = (__readUInt32LE(mt,4)/1e7)*Math.pow(2,32)+__readUInt32LE(mt,0)/1e7;
 			o.mt = new Date((m2 - 11644473600)*1000);
 		}
 		files[name] = o;

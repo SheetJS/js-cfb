@@ -14,10 +14,10 @@ function sleuth_fat(idx, cnt) {
 	if(idx !== FREESECT) {
 		var sector = sectors[idx];
 		for(var i = 0; i != ssz/4-1; ++i) {
-			if((q = sector.readUInt32LE(i*4)) === ENDOFCHAIN) break;
+			if((q = __readUInt32LE(sector,i*4)) === ENDOFCHAIN) break;
 			fat_addrs.push(q);
 		}
-		sleuth_fat(sector.readUInt32LE(ssz-4),cnt - 1);
+		sleuth_fat(__readUInt32LE(sector,ssz-4),cnt - 1);
 	}
 }
 sleuth_fat(difat_start, ndfs);
@@ -25,13 +25,12 @@ sleuth_fat(difat_start, ndfs);
 /** DONT CAT THE FAT!  Just calculate where we need to go */
 function get_buffer(byte_addr, bytes) {
 	var addr = fat_addrs[Math.floor(byte_addr*4/ssz)];
-	if(ssz - (byte_addr*4 % ssz) < (bytes || 0))
-		throw "FAT boundary crossed: " + byte_addr + " "+bytes+" "+ssz;
+	if(ssz - (byte_addr*4 % ssz) < (bytes || 0)) throw "FAT boundary crossed: " + byte_addr + " "+bytes+" "+ssz;
 	return sectors[addr].slice((byte_addr*4 % ssz));
 }
 
 function get_buffer_u32(byte_addr) {
-	return get_buffer(byte_addr,4).readUInt32LE(0);
+	return __readUInt32LE(get_buffer(byte_addr,4), 0);
 }
 
 function get_next_sector(idx) { return get_buffer_u32(idx); }
@@ -44,7 +43,7 @@ for(i=0; i != sectors.length; ++i) {
 	if(chkd[k]) continue;
 	for(j=k; j<=MAXREGSECT; buf.push(j),j=get_next_sector(j)) chkd[j] = true;
 	sector_list[k] = {nodes: buf};
-	sector_list[k].data = Array(buf.map(get_sector)).toBuffer();
+	sector_list[k].data = __toBuffer(Array(buf.map(get_sector)));
 }
 sector_list[dir_start].name = "!Directory";
 if(nmfs > 0 && minifat_start !== ENDOFCHAIN) sector_list[minifat_start].name = "!MiniFAT";

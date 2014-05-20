@@ -1,6 +1,6 @@
 {
 	"name": "cfb",
-	"version": "0.8.1",
+	"version": "0.9.1",
 	"author": "SheetJS",
 	"description": "Compound File Binary File Format extractor",
 	"keywords": [ "cfb", "compression", "office" ],
@@ -14,6 +14,11 @@
 	},
 	"dependencies": {
 		"commander":""
+	},
+	"config": {
+		"blanket": {
+			"pattern": "cfb.js"
+		}
 	},
 	"bugs": { "url": "https://github.com/SheetJS/js-cfb/issues" },
 	"license": "Apache 2.0"	

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-var CFB = require('../cfb');
+var CFB = require('../');
 var fs = require('fs'), program = require('commander');
 program
-	.version('0.8.1')
+	.version(CFB.version)
 	.usage('[options] <file>')
 	.option('-q, --quiet', 'print but do not extract')
 	.parse(process.argv);

@@ -90,3 +90,5 @@ Writing is not supported.  It is in the works, but it has not yet been released.
 This implementation is covered under Apache 2.0 license.  It complies with the
 [Open Specifications Promise](http://www.microsoft.com/openspecifications/)
 
+[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/88c2e1fd637653cd780b3c6d3dcd70ad "githalytics.com")](http://githalytics.com/SheetJS/js-cfb)
+
