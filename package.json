@@ -1,19 +1,25 @@
 {
 	"name": "cfb",
-	"version": "0.9.1",
-	"author": "SheetJS",
+	"version": "0.10.0",
+	"author": "sheetjs",
 	"description": "Compound File Binary File Format extractor",
 	"keywords": [ "cfb", "compression", "office" ],
 	"bin": {
 		"cfb": "./bin/cfb"
 	},
 	"main": "./cfb",
-	"repository": { "type":"git", "url":"git://github.com/SheetJS/js-cfb.git" },
-	"scripts": {
-		"test": "make test"
-	},
 	"dependencies": {
 		"commander":""
+	},
+	"devDependencies": {
+		"mocha":"",
+		"xlsjs":"",
+		"uglify-js":""
+	},
+	"repository": { "type":"git", "url":"git://github.com/SheetJS/js-cfb.git" },
+	"scripts": {
+		"pretest": "make init",
+		"test": "make test"
 	},
 	"config": {
 		"blanket": {
@@ -21,5 +27,6 @@
 		}
 	},
 	"bugs": { "url": "https://github.com/SheetJS/js-cfb/issues" },
-	"license": "Apache 2.0"	
+	"license": "Apache-2.0",
+	"engines": { "node": ">=0.8" }
 }

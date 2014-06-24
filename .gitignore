@@ -1,0 +1,6 @@
+test_files
+node_modules/
+*.xls
+misc/coverage.html
+prof.js
+v8.log

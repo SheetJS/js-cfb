@@ -1,17 +1,14 @@
-
+var fs;
 function readFileSync(filename) {
-	var fs = require('fs');
-	var file = fs.readFileSync(filename);
-	return parse(file);
+	if(fs === undefined) fs = require('fs');
+	return parse(fs.readFileSync(filename));
 }
 
 function readSync(blob, options) {
-	var o = options || {};
-	switch((o.type || "base64")) {
+	switch(options !== undefined && options.type !== undefined ? options.type : "base64") {
 		case "file": return readFileSync(blob);
-		case "base64": blob = Base64.decode(blob);
-		/* falls through */
-		case "binary": blob = s2a(blob); break;
+		case "base64": return parse(s2a(Base64.decode(blob)));
+		case "binary": return parse(s2a(blob));
 	}
 	return parse(blob);
 }

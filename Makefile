@@ -1,16 +1,17 @@
 LIB=cfb
-DEPS=$(wildcard bits/*.js)
+DEPS=$(sort $(wildcard bits/*.js))
 TARGET=$(LIB).js
 
 $(TARGET): $(DEPS)
-	cat $^ > $@
+	cat $^ | tr -d '\15\32' > $@
 
 bits/31_version.js: package.json
-	echo "this.version = '"`grep version package.json | awk '{gsub(/[^0-9a-z\.-]/,"",$$2); print $$2}'`"';" > $@
+	echo "exports.version = '"`grep version package.json | awk '{gsub(/[^0-9a-z\.-]/,"",$$2); print $$2}'`"';" > $@
 
 .PHONY: clean
 clean:
-	rm -rf $(TARGET) ./test_files/
+	rm -f $(TARGET)
+	rm -rf ./test_files/
 
 .PHONY: init
 init:
@@ -21,19 +22,30 @@ init:
 test mocha: test.js
 	mocha -R spec
 
+.PHONY: prof
+prof:
+	cat misc/prof.js test.js > prof.js
+	node --prof prof.js
+
 .PHONY: lint
 lint: $(TARGET)
 	jshint --show-non-errors $(TARGET)
+	jscs $(TARGET)
 
-.PHONY: cov
+.PHONY: cov cov-spin
 cov: misc/coverage.html
+cov-spin:
+	make cov & bash misc/spin.sh $$!
 
 misc/coverage.html: $(TARGET) test.js
-	mocha --require blanket -R html-cov > misc/coverage.html
+	mocha --require blanket -R html-cov > $@
 
-.PHONY: coveralls
+.PHONY: coveralls coveralls-spin
 coveralls:
 	mocha --require blanket --reporter mocha-lcov-reporter | ./node_modules/coveralls/bin/coveralls.js
+
+coveralls-spin:
+	make coveralls & bash misc/spin.sh $$!
 
 .PHONY: dist
 dist: $(TARGET)

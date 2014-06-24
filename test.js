@@ -3,10 +3,11 @@ var CFB;
 var fs = require('fs');
 describe('source', function() { it('should load', function() { CFB = require('./'); }); });
 
+var ffunc = function(x){return x.substr(-4)==".xls" && fails.indexOf(x) === -1;};
 var fails = fs.existsSync('./fails.lst') ? fs.readFileSync('./fails.lst', 'utf-8').split("\n") : [];
-var files = fs.readdirSync('test_files').filter(function(x){return x.substr(-4)==".xls" && fails.indexOf(x) === -1;});
-var f2011 = fs.readdirSync('test_files/2011').filter(function(x){return x.substr(-4)==".xls" && fails.indexOf(x) === -1;});
-var f2013 = fs.readdirSync('test_files/2013').filter(function(x){return x.substr(-4)==".xls" && fails.indexOf(x) === -1;});
+var files = fs.readdirSync('test_files').filter(ffunc);
+var f2011 = fs.readdirSync('test_files/2011').filter(ffunc);
+var f2013 = fs.readdirSync('test_files/2013').filter(ffunc);
 
 var dir = "./test_files/";
 
@@ -18,8 +19,6 @@ function parsetest(x, cfb) {
 		it('should find absolute path', function() {
 			if(!cfb.find('/Workbook') && !cfb.find('/Book')) throw new Error("Cannot find workbook for " + x);
 		});
-	});
-	describe(x + ' should ', function() {
 	});
 }
 
@@ -52,5 +51,8 @@ describe('input formats', function() {
 	});
 	it('should read base64 strings', function() {
 		CFB.read(fs.readFileSync(dir + '/' + cp, 'base64'), {type: 'base64'});
+	});
+	it('should read buffers', function() {
+		CFB.read(fs.readFileSync(dir + '/' + cp), {type: 'buffer'});
 	});
 });

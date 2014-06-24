@@ -1,7 +1,1 @@
-if(typeof require !== 'undefined' && typeof exports !== 'undefined') {
-	var fs = require('fs');
-	exports.read = CFB.read;
-	exports.parse = CFB.parse;
-	exports.utils = CFB_utils;
-	exports.version = CFB.version;
-}
+if(typeof require !== 'undefined' && typeof module !== 'undefined' && typeof DO_NOT_EXPORT_CFB === 'undefined') { module.exports = CFB; }

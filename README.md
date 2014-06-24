@@ -75,7 +75,7 @@ The entry objects are available from `FullPathDir` and `FileIndex` elements of t
 container object.
 
 - `.name` is the (case sensitive) internal name
-- `.type` is the type (`stream` for files, `storage` for dirs, `root` for root)
+- `.type` is the type (`2 (stream)` for files, `1 (storage)` for dirs, `5 (root)` for root)
 - `.content` is a Buffer/Array with the raw content
 - `.ct`/`.mt` are the creation and modification time (if provided in file)
 
@@ -89,6 +89,10 @@ Writing is not supported.  It is in the works, but it has not yet been released.
 
 This implementation is covered under Apache 2.0 license.  It complies with the
 [Open Specifications Promise](http://www.microsoft.com/openspecifications/)
+
+[![Build Status](https://travis-ci.org/SheetJS/js-cfb.svg?branch=master)](https://travis-ci.org/SheetJS/js-cfb)
+
+[![Coverage Status](https://coveralls.io/repos/SheetJS/js-cfb/badge.png?branch=master)](https://coveralls.io/r/SheetJS/js-cfb?branch=master)
 
 [![githalytics.com alpha](https://cruel-carlota.pagodabox.com/88c2e1fd637653cd780b3c6d3dcd70ad "githalytics.com")](http://githalytics.com/SheetJS/js-cfb)
 
