@@ -1,32 +1,39 @@
 {
-	"name": "cfb",
-	"version": "0.10.0",
-	"author": "sheetjs",
-	"description": "Compound File Binary File Format extractor",
-	"keywords": [ "cfb", "compression", "office" ],
-	"bin": {
-		"cfb": "./bin/cfb"
-	},
-	"main": "./cfb",
-	"dependencies": {
-		"commander":""
-	},
-	"devDependencies": {
-		"mocha":"",
-		"xlsjs":"",
-		"uglify-js":""
-	},
-	"repository": { "type":"git", "url":"git://github.com/SheetJS/js-cfb.git" },
-	"scripts": {
-		"pretest": "make init",
-		"test": "make test"
-	},
-	"config": {
-		"blanket": {
-			"pattern": "cfb.js"
-		}
-	},
-	"bugs": { "url": "https://github.com/SheetJS/js-cfb/issues" },
-	"license": "Apache-2.0",
-	"engines": { "node": ">=0.8" }
+  "name": "cfb",
+  "version": "0.10.1",
+  "author": "sheetjs",
+  "description": "Compound File Binary File Format extractor",
+  "keywords": [ "cfb", "compression", "office" ],
+  "bin": {
+    "cfb": "./bin/cfb"
+  },
+  "main": "./cfb",
+  "files": [
+    "LICENSE",
+    "README.md",
+    "bin/",
+    "dist/",
+    "cfb.js"
+  ],
+  "dependencies": {
+    "commander":""
+  },
+  "devDependencies": {
+    "mocha":"",
+    "xlsjs":"",
+    "uglify-js":""
+  },
+  "repository": { "type":"git", "url":"git://github.com/SheetJS/js-cfb.git" },
+  "scripts": {
+    "pretest": "make init",
+    "test": "make test"
+  },
+  "config": {
+    "blanket": {
+      "pattern": "cfb.js"
+    }
+  },
+  "bugs": { "url": "https://github.com/SheetJS/js-cfb/issues" },
+  "license": "Apache-2.0",
+  "engines": { "node": ">=0.8" }
 }
