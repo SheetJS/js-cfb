@@ -14,7 +14,8 @@ var blob = file.slice(0,512);
 prep_blob(blob, 0);
 
 /* major version */
-mver = check_get_mver(blob);
+var mv = check_get_mver(blob);
+mver = mv[0];
 switch(mver) {
 	case 3: ssz = 512; break; case 4: ssz = 4096; break;
 	default: throw "Major Version: Expected 3 or 4 saw " + mver;
@@ -74,6 +75,8 @@ var sector_list = make_sector_list(sectors, dir_start, fat_addrs, ssz);
 sector_list[dir_start].name = "!Directory";
 if(nmfs > 0 && minifat_start !== ENDOFCHAIN) sector_list[minifat_start].name = "!MiniFAT";
 sector_list[fat_addrs[0]].name = "!FAT";
+sector_list.fat_addrs = fat_addrs;
+sector_list.ssz = ssz;
 
 /* [MS-CFB] 2.6.1 Compound File Directory Entry */
 var files = {}, Paths = [], FileIndex = [], FullPaths = [], FullPathDir = {};

@@ -37,7 +37,7 @@ function read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, Fil
 			/*minifat_size = o.size;*/
 		} else if(o.size >= 4096 /* MSCSZ */) {
 			o.storage = 'fat';
-			if(sector_list[o.start] === undefined) if((o.start+=dir_start)>=sectors.length) o.start-=sectors.length;
+			if(sector_list[o.start] === undefined) sector_list[o.start] = get_sector_list(sectors, o.start, sector_list.fat_addrs, sector_list.ssz);
 			sector_list[o.start].name = o.name;
 			o.content = sector_list[o.start].data.slice(0,o.size);
 			prep_blob(o.content, 0);

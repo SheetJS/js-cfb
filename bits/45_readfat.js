@@ -14,6 +14,26 @@ function sleuth_fat(idx, cnt, sectors, ssz, fat_addrs) {
 	}
 }
 
+/** Follow the linked list of sectors for a given starting point */
+function get_sector_list(sectors, start, fat_addrs, ssz, chkd) {
+	var sl = sectors.length;
+	var buf, buf_chain;
+	if(!chkd) chkd = new Array(sl);
+	var modulus = ssz - 1, j, jj;
+	buf = [];
+	buf_chain = [];
+	for(j=start; j>=0;) {
+		chkd[j] = true;
+		buf[buf.length] = j;
+		buf_chain.push(sectors[j]);
+		var addr = fat_addrs[Math.floor(j*4/ssz)];
+		jj = ((j*4) & modulus);
+		if(ssz < 4 + jj) throw "FAT boundary crossed: " + j + " 4 "+ssz;
+		j = __readInt32LE(sectors[addr], jj);
+	}
+	return {nodes: buf, data:__toBuffer([buf_chain])};
+}
+
 /** Chase down the sector linked lists */
 function make_sector_list(sectors, dir_start, fat_addrs, ssz) {
 	var sl = sectors.length, sector_list = new Array(sl);

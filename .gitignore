@@ -1,6 +1,8 @@
-test_files
-node_modules/
-*.xls
+node_modules
 misc/coverage.html
 prof.js
 v8.log
+test_files
+test_files_pres
+*.xls
+*.sheetjs

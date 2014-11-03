@@ -7,9 +7,9 @@ function check_get_mver(blob) {
 	blob.chk(HEADER_CLSID, 'CLSID: ');
 
 	// minor version 2
-	blob.l += 2;
+	var mver = blob.read_shift(2, 'u');
 
-	return blob.read_shift(2,'u');
+	return [blob.read_shift(2,'u'), mver];
 }
 function check_shifts(blob, mver) {
 	var shift = 0x09;

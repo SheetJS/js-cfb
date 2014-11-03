@@ -1,8 +1,8 @@
-# Compound File Binary Format 
+# Compound File Binary Format
 
 This is a Pure-JS implementation of MS-CFB: Compound File Binary File Format, a
 format used in many Microsoft file types (such as XLS, DOC, and other Microsoft
-Office file types). 
+Office file types).
 
 # Utility Installation and Usage
 
@@ -14,7 +14,7 @@ $ cfb path/to/CFB/file
 ```
 
 The command will extract the storages and streams in the container, generating
-files that line up with the tree-based structure of the storage.  Metadata 
+files that line up with the tree-based structure of the storage.  Metadata
 such as the red-black tree are discarded (and in the future, new CFB containers
 will exclusively use black nodes)
 
@@ -55,9 +55,9 @@ It has the following properties and methods:
 
 - `.find(path)` performs a case-insensitive match for the path (or file name, if
   there are no slashes) and returns an entry object (described later) or null if
-  not found 
+  not found
 
-- `.FullPaths` is an array of the names of all of the streams (files) and 
+- `.FullPaths` is an array of the names of all of the streams (files) and
   storages (directories) in the container.  The paths are properly prefixed from
   the root entry (so the entries are unique)
 
@@ -67,23 +67,26 @@ It has the following properties and methods:
 - `.FileIndex` is an array of the objects from `.FullPathDir`, in the same order
   as `.FullPaths`.
 
-- `.raw` contains the raw header and sectors 
+- `.raw` contains the raw header and sectors
 
 ## Entry Object Description
 
-The entry objects are available from `FullPathDir` and `FileIndex` elements of the 
-container object.
+The entry objects are available from `FullPathDir` and `FileIndex` elements of
+the container object.
 
 - `.name` is the (case sensitive) internal name
-- `.type` is the type (`2 (stream)` for files, `1 (storage)` for dirs, `5 (root)` for root)
+- `.type` is the type as defined in "Object Type" in [MS-CFB] 2.6.1:
+  `2 (stream)` for files, `1 (storage)` for dirs, `5 (root)` for root)
 - `.content` is a Buffer/Array with the raw content
 - `.ct`/`.mt` are the creation and modification time (if provided in file)
 
 # Notes
 
-Case comparison has not been verified for non-ASCII character
+Case comparison has not been verified for non-ASCII characters
 
 Writing is not supported.  It is in the works, but it has not yet been released.
+
+The `xlscfb.js` file is designed to be embedded in [js-xls](http://git.io/xls)
 
 # License
 
