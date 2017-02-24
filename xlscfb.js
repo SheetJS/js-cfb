@@ -6,7 +6,7 @@ var DO_NOT_EXPORT_CFB = true;
 /* [MS-CFB] v20130118 */
 var CFB = (function _CFB(){
 var exports = {};
-exports.version = '0.10.3';
+exports.version = '0.11.0';
 function parse(file) {
 var mver = 3; // major version
 var ssz = 512; // sector size
