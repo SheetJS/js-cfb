@@ -4,7 +4,7 @@ function make_find_path(FullPaths, Paths, FileIndex, files, root_name) {
 	var UCPaths = new Array(Paths.length), i;
 	for(i = 0; i < FullPaths.length; ++i) UCFullPaths[i] = FullPaths[i].toUpperCase().replace(chr0,'').replace(chr1,'!');
 	for(i = 0; i < Paths.length; ++i) UCPaths[i] = Paths[i].toUpperCase().replace(chr0,'').replace(chr1,'!');
-	return function find_path(path) {
+	return function find_path(path/*:string*/) {
 		var k;
 		if(path.charCodeAt(0) === 47 /* "/" */) { k=true; path = root_name + path; }
 		else k = path.indexOf("/") !== -1;

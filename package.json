@@ -1,6 +1,6 @@
 {
   "name": "cfb",
-  "version": "0.10.2-a",
+  "version": "0.10.3",
   "author": "sheetjs",
   "description": "Compound File Binary File Format extractor",
   "keywords": [ "cfb", "compression", "office" ],
@@ -13,7 +13,8 @@
     "README.md",
     "bin/",
     "dist/",
-    "cfb.js"
+    "cfb.js",
+    "xlscfb.flow.js"
   ],
   "dependencies": {
     "commander":""

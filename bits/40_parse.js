@@ -10,7 +10,7 @@ var difat_start = 0; // first mini FAT sector location
 var fat_addrs = []; // locations of FAT sectors
 
 /* [MS-CFB] 2.2 Compound File Header */
-var blob = file.slice(0,512);
+var blob/*:any*/ = file.slice(0,512);
 prep_blob(blob, 0);
 
 /* major version */
@@ -70,7 +70,7 @@ var sectors = sectorify(file, ssz);
 sleuth_fat(difat_start, ndfs, sectors, ssz, fat_addrs);
 
 /** Chains */
-var sector_list = make_sector_list(sectors, dir_start, fat_addrs, ssz);
+var sector_list/*:SectorList*/ = make_sector_list(sectors, dir_start, fat_addrs, ssz);
 
 sector_list[dir_start].name = "!Directory";
 if(nmfs > 0 && minifat_start !== ENDOFCHAIN) sector_list[minifat_start].name = "!MiniFAT";
@@ -79,7 +79,7 @@ sector_list.fat_addrs = fat_addrs;
 sector_list.ssz = ssz;
 
 /* [MS-CFB] 2.6.1 Compound File Directory Entry */
-var files = {}, Paths = [], FileIndex = [], FullPaths = [], FullPathDir = {};
+var files = {}, Paths/*:any*/ = [], FileIndex = [], FullPaths = [], FullPathDir = {};
 read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, FileIndex);
 
 build_full_paths(FileIndex, FullPathDir, FullPaths, Paths);

@@ -1,4 +1,10 @@
 <!DOCTYPE html>
+<!-- cfb.js (C) 2013-present  SheetJS http://sheetjs.com -->
+<!-- vim: set ts=2: -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>JS-CFB Live Demo</title>
 <style>
 #drop{
 	border:2px dashed #bbb;
@@ -13,15 +19,33 @@
 	width:100%;
 }
 </style>
+</head>
+<body>
 <b>JS-CFB Live Demo</b><br />
 
 <div id="drop">Drop an XLS file here to see the CFB structure.</div>
+Advanced Demo Options: <br />
+Use readAsBinaryString: (when available) <input type="checkbox" name="userabs" checked><br />
 <pre id="out"></pre>
 <br />
 <script src="cfb.js"></script>
 <script>
+/*jshint browser:true */
+/*global CFB, out */
+var rABS = typeof FileReader !== "undefined" && typeof FileReader.prototype !== "undefined" && typeof FileReader.prototype.readAsBinaryString !== "undefined";
+if(!rABS) {
+	document.getElementsByName("userabs")[0].disabled = true;
+	document.getElementsByName("userabs")[0].checked = false;
+}
+
+function fixdata(data) {
+	var o = "", l = 0, w = 10240;
+	for(; l<data.byteLength/w; ++l) o+=String.fromCharCode.apply(null,new Uint8Array(data.slice(l*w,l*w+w)));
+	o+=String.fromCharCode.apply(null, new Uint8Array(data.slice(l*w)));
+	return o;
+}
+
 function process_data(data) {
-	var output = "";
 	if(out.innerText === undefined) out.textContent = data.FullPaths;
 	else out.innerText = data.FullPaths.join("\n");
 }
@@ -30,18 +54,25 @@ var drop = document.getElementById('drop');
 function handleDrop(e) {
 	e.stopPropagation();
 	e.preventDefault();
+	rABS = document.getElementsByName("userabs")[0].checked;
 	var files = e.dataTransfer.files;
-	var i,f;
-	for (i = 0, f = files[i]; i != files.length; ++i) {
+	var f = files[0];
+	{
 		var reader = new FileReader();
-		var name = f.name;
+		//var name = f.name;
 		reader.onload = function(e) {
 			var data = e.target.result;
-			var cfb = CFB.read(data, {type: 'binary'});
+			var cfb;
+			if(rABS) {
+				cfb = CFB.read(data, {type: 'binary'});
+			} else {
+				var arr = fixdata(data);
+				cfb = CFB.read(btoa(arr), {type: 'base64'});
+			}
 			process_data(cfb);
 		};
-		reader.readAsBinaryString(f);
-		//reader.readAsArrayBuffer(f);
+		if(rABS) reader.readAsBinaryString(f);
+		else reader.readAsArrayBuffer(f);
 	}
 }
 
@@ -57,3 +88,5 @@ if(drop.addEventListener) {
 	drop.addEventListener('drop', handleDrop, false);
 }
 </script>
+</body>
+</html>

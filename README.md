@@ -1,37 +1,41 @@
 # Compound File Binary Format
 
 This is a Pure-JS implementation of MS-CFB: Compound File Binary File Format, a
-format used in many Microsoft file types (such as XLS, DOC, and other Microsoft
-Office file types).
+format used in many Microsoft file types (such as XLS and DOC)
 
 # Utility Installation and Usage
 
 The package is available on NPM:
 
-```
+```bash
 $ npm install -g cfb
 $ cfb path/to/CFB/file
 ```
 
 The command will extract the storages and streams in the container, generating
-files that line up with the tree-based structure of the storage.  Metadata
-such as the red-black tree are discarded (and in the future, new CFB containers
-will exclusively use black nodes)
+files that line up with the tree-based structure of the storage.  Metadata such
+as the red-black tree are discarded.
 
 # Library Installation and Usage
 
 In the browser:
 
-    <script src="cfb.js" type="text/javascript"></script>
+```html
+<script src="cfb.js" type="text/javascript"></script>
+```
 
 In node:
 
-    var CFB = require('cfb');
+```js
+var CFB = require('cfb');
+```
 
 For example, to get the Workbook content from an XLS file:
 
-    var cfb = CFB.read(filename, {type: 'file'});
-    var workbook = cfb.find('Workbook')
+```js
+var cfb = CFB.read(filename, {type: 'file'});
+var workbook = cfb.find('Workbook')
+```
 
 # API
 
@@ -86,7 +90,7 @@ Case comparison has not been verified for non-ASCII characters
 
 Writing is not supported.  It is in the works, but it has not yet been released.
 
-The `xlscfb.js` file is designed to be embedded in [js-xls](http://git.io/xls)
+The `xlscfb.js` file is designed to be embedded in [js-xlsx](http://git.io/xlsx)
 
 # License
 
@@ -95,7 +99,14 @@ This implementation is covered under Apache 2.0 license.  It complies with the
 
 [![Build Status](https://travis-ci.org/SheetJS/js-cfb.svg?branch=master)](https://travis-ci.org/SheetJS/js-cfb)
 
-[![Coverage Status](https://coveralls.io/repos/SheetJS/js-cfb/badge.png?branch=master)](https://coveralls.io/r/SheetJS/js-cfb?branch=master)
+[![Coverage Status](http://img.shields.io/coveralls/SheetJS/js-cfb/master.svg)](https://coveralls.io/r/SheetJS/js-cfb?branch=master)
 
-[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/88c2e1fd637653cd780b3c6d3dcd70ad "githalytics.com")](http://githalytics.com/SheetJS/js-cfb)
+[![Analytics](https://ga-beacon.appspot.com/UA-36810333-1/SheetJS/js-cfb?pixel)](https://github.com/SheetJS/js-cfb)
+
+[![NPM Downloads](https://img.shields.io/npm/dt/cfb.svg)](https://npmjs.org/package/cfb)
+
+[![Dependencies Status](https://david-dm.org/sheetjs/js-cfb/status.svg)](https://david-dm.org/sheetjs/js-cfb)
+
+[![ghit.me](https://ghit.me/badge.svg?repo=sheetjs/js-cfb)](https://ghit.me/repo/sheetjs/js-cfb)
+
 

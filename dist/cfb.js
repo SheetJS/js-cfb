@@ -1,4 +1,4 @@
-/* cfb.js (C) 2013-2014 SheetJS -- http://sheetjs.com */
+/* cfb.js (C) 2013-present SheetJS -- http://sheetjs.com */
 /* vim: set ts=2: */
 /*jshint eqnull:true */
 
@@ -49,7 +49,7 @@ if(typeof Buffer !== "undefined") {
 	};
 	__hexlify = function(b,s,l) { return Buffer.isBuffer(b) ? b.toString('hex',s,s+l) : ___hexlify(b,s,l); };
 	__toBuffer = function(bufs) { return (bufs[0].length > 0 && Buffer.isBuffer(bufs[0][0])) ? Buffer.concat(bufs[0]) : ___toBuffer(bufs);};
-	s2a = function(s) { return Buffer(s, "binary"); };
+	s2a = function(s) { return new Buffer(s, "binary"); };
 	bconcat = function(bufs) { return Buffer.isBuffer(bufs[0]) ? Buffer.concat(bufs) : [].concat.apply([], bufs); };
 }
 
@@ -86,7 +86,7 @@ function prep_blob(blob, pos) {
 /* [MS-CFB] v20130118 */
 var CFB = (function _CFB(){
 var exports = {};
-exports.version = '0.10.2';
+exports.version = '0.10.3';
 function parse(file) {
 var mver = 3; // major version
 var ssz = 512; // sector size
@@ -296,6 +296,7 @@ function sleuth_fat(idx, cnt, sectors, ssz, fat_addrs) {
 		if(cnt !== 0) throw "DIFAT chain shorter than expected";
 	} else if(idx !== -1 /*FREESECT*/) {
 		var sector = sectors[idx], m = (ssz>>>2)-1;
+		if(!sector) return;
 		for(var i = 0; i < m; ++i) {
 			if((q = __readInt32LE(sector,i*4)) === ENDOFCHAIN) break;
 			fat_addrs.push(q);
@@ -319,6 +320,7 @@ function get_sector_list(sectors, start, fat_addrs, ssz, chkd) {
 		var addr = fat_addrs[Math.floor(j*4/ssz)];
 		jj = ((j*4) & modulus);
 		if(ssz < 4 + jj) throw "FAT boundary crossed: " + j + " 4 "+ssz;
+		if(!sectors[addr]) break;
 		j = __readInt32LE(sectors[addr], jj);
 	}
 	return {nodes: buf, data:__toBuffer([buf_chain])};
@@ -341,6 +343,7 @@ function make_sector_list(sectors, dir_start, fat_addrs, ssz) {
 			var addr = fat_addrs[Math.floor(j*4/ssz)];
 			jj = ((j*4) & modulus);
 			if(ssz < 4 + jj) throw "FAT boundary crossed: " + j + " 4 "+ssz;
+			if(!sectors[addr]) break;
 			j = __readInt32LE(sectors[addr], jj);
 		}
 		sector_list[k] = {nodes: buf, data:__toBuffer([buf_chain])};
@@ -361,7 +364,7 @@ function read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, Fil
 		if(namelen === 0) continue;
 		name = __utf16le(blob,0,namelen-pl);
 		Paths.push(name);
-		o = {
+		o = ({
 			name:  name,
 			type:  blob.read_shift(1),
 			color: blob.read_shift(1),
@@ -370,7 +373,7 @@ function read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, Fil
 			C:     blob.read_shift(4, 'i'),
 			clsid: blob.read_shift(16),
 			state: blob.read_shift(4, 'i')
-		};
+		});
 		ctime = blob.read_shift(2) + blob.read_shift(2) + blob.read_shift(2) + blob.read_shift(2);
 		if(ctime !== 0) {
 			o.ctime = ctime; o.ct = read_date(blob, blob.l-8);

@@ -11,7 +11,7 @@ function read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, Fil
 		if(namelen === 0) continue;
 		name = __utf16le(blob,0,namelen-pl);
 		Paths.push(name);
-		o = {
+		o = ({
 			name:  name,
 			type:  blob.read_shift(1),
 			color: blob.read_shift(1),
@@ -20,7 +20,7 @@ function read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, Fil
 			C:     blob.read_shift(4, 'i'),
 			clsid: blob.read_shift(16),
 			state: blob.read_shift(4, 'i')
-		};
+		}/*:any*/);
 		ctime = blob.read_shift(2) + blob.read_shift(2) + blob.read_shift(2) + blob.read_shift(2);
 		if(ctime !== 0) {
 			o.ctime = ctime; o.ct = read_date(blob, blob.l-8);

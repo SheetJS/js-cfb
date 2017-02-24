@@ -1,8 +1,32 @@
 var DO_NOT_EXPORT_CFB = true;
+/*::
+declare var Base64:any;
+declare var ReadShift:any;
+declare var CheckField:any;
+declare var prep_blob:any;
+declare var __readUInt32LE:any;
+declare var __readInt32LE:any;
+declare var __toBuffer:any;
+declare var __utf16le:any;
+declare var bconcat:any;
+declare var s2a:any;
+declare var chr0:any;
+declare var chr1:any;
+*/
 /* cfb.js (C) 2013-present SheetJS -- http://sheetjs.com */
 /* vim: set ts=2: */
 /*jshint eqnull:true */
 
+/*::
+declare var DO_NOT_EXPORT_CFB:any;
+type SectorEntry = any;
+type SectorList = {
+	(k:string|number):SectorEntry;
+	name:?string;
+	fat_addrs:any;
+	ssz:number;
+}
+*/
 /* [MS-CFB] v20130118 */
 var CFB = (function _CFB(){
 var exports = {};
@@ -19,7 +43,7 @@ var difat_start = 0; // first mini FAT sector location
 var fat_addrs = []; // locations of FAT sectors
 
 /* [MS-CFB] 2.2 Compound File Header */
-var blob = file.slice(0,512);
+var blob/*:any*/ = file.slice(0,512);
 prep_blob(blob, 0);
 
 /* major version */
@@ -79,7 +103,7 @@ var sectors = sectorify(file, ssz);
 sleuth_fat(difat_start, ndfs, sectors, ssz, fat_addrs);
 
 /** Chains */
-var sector_list = make_sector_list(sectors, dir_start, fat_addrs, ssz);
+var sector_list/*:SectorList*/ = make_sector_list(sectors, dir_start, fat_addrs, ssz);
 
 sector_list[dir_start].name = "!Directory";
 if(nmfs > 0 && minifat_start !== ENDOFCHAIN) sector_list[minifat_start].name = "!MiniFAT";
@@ -88,7 +112,7 @@ sector_list.fat_addrs = fat_addrs;
 sector_list.ssz = ssz;
 
 /* [MS-CFB] 2.6.1 Compound File Directory Entry */
-var files = {}, Paths = [], FileIndex = [], FullPaths = [], FullPathDir = {};
+var files = {}, Paths/*:any*/ = [], FileIndex = [], FullPaths = [], FullPathDir = {};
 read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, FileIndex);
 
 build_full_paths(FileIndex, FullPathDir, FullPaths, Paths);
@@ -197,7 +221,7 @@ function make_find_path(FullPaths, Paths, FileIndex, files, root_name) {
 	var UCPaths = new Array(Paths.length), i;
 	for(i = 0; i < FullPaths.length; ++i) UCFullPaths[i] = FullPaths[i].toUpperCase().replace(chr0,'').replace(chr1,'!');
 	for(i = 0; i < Paths.length; ++i) UCPaths[i] = Paths[i].toUpperCase().replace(chr0,'').replace(chr1,'!');
-	return function find_path(path) {
+	return function find_path(path/*:string*/) {
 		var k;
 		if(path.charCodeAt(0) === 47 /* "/" */) { k=true; path = root_name + path; }
 		else k = path.indexOf("/") !== -1;
@@ -247,7 +271,7 @@ function get_sector_list(sectors, start, fat_addrs, ssz, chkd) {
 }
 
 /** Chase down the sector linked lists */
-function make_sector_list(sectors, dir_start, fat_addrs, ssz) {
+function make_sector_list(sectors, dir_start, fat_addrs, ssz/*:number*/)/*:any*/ {
 	var sl = sectors.length, sector_list = new Array(sl);
 	var chkd = new Array(sl), buf, buf_chain;
 	var modulus = ssz - 1, i, j, k, jj;
@@ -293,7 +317,7 @@ function read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, Fil
 			C:     blob.read_shift(4, 'i'),
 			clsid: blob.read_shift(16),
 			state: blob.read_shift(4, 'i')
-		});
+		}/*:any*/);
 		ctime = blob.read_shift(2) + blob.read_shift(2) + blob.read_shift(2) + blob.read_shift(2);
 		if(ctime !== 0) {
 			o.ctime = ctime; o.ct = read_date(blob, blob.l-8);
@@ -331,12 +355,12 @@ function read_date(blob, offset) {
 }
 
 var fs;
-function readFileSync(filename, options) {
+function readFileSync(filename/*:string*/, options/*:any*/) {
 	if(fs === undefined) fs = require('fs');
 	return parse(fs.readFileSync(filename), options);
 }
 
-function readSync(blob, options) {
+function readSync(blob/*:any*/, options/*:any*/) {
 	switch(options !== undefined && options.type !== undefined ? options.type : "base64") {
 		case "file": return readFileSync(blob, options);
 		case "base64": return parse(s2a(Base64.decode(blob)), options);

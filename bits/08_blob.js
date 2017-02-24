@@ -28,14 +28,14 @@ var Base64 = (function(){
 var chr0 = /\u0000/g, chr1 = /[\u0001-\u0006]/;
 
 var s2a, _s2a;
-s2a = _s2a = function _s2a(s) { return s.split("").map(function(x){ return x.charCodeAt(0) & 0xff; }); };
+s2a = _s2a = function _s2a(s/*:string*/) { return s.split("").map(function(x){ return x.charCodeAt(0) & 0xff; }); };
 var __toBuffer, ___toBuffer;
-__toBuffer = ___toBuffer = function(bufs) { var x = []; for(var i = 0; i < bufs[0].length; ++i) { x.push.apply(x, bufs[0][i]); } return x; };
+__toBuffer = ___toBuffer = function(bufs/*:any*/) { var x = []; for(var i = 0; i < bufs[0].length; ++i) { x.push.apply(x, bufs[0][i]); } return x; };
 var __utf16le, ___utf16le;
 __utf16le = ___utf16le = function(b,s,e) { var ss=[]; for(var i=s; i<e; i+=2) ss.push(String.fromCharCode(__readUInt16LE(b,i))); return ss.join("").replace(chr0,'').replace(chr1,'!'); };
 var __hexlify, ___hexlify;
 __hexlify = ___hexlify = function(b,s,l) { return b.slice(s,(s+l)).map(function(x){return (x<16?"0":"") + x.toString(16);}).join(""); };
-var bconcat = function(bufs) { return [].concat.apply([], bufs); };
+var bconcat = function(bufs/*:any*/) { return [].concat.apply([], bufs); };
 
 
 if(typeof Buffer !== "undefined") {
@@ -44,9 +44,9 @@ if(typeof Buffer !== "undefined") {
 		return b.toString('utf16le',s,e).replace(chr0,'').replace(chr1,'!');
 	};
 	__hexlify = function(b,s,l) { return Buffer.isBuffer(b) ? b.toString('hex',s,s+l) : ___hexlify(b,s,l); };
-	__toBuffer = function(bufs) { return (bufs[0].length > 0 && Buffer.isBuffer(bufs[0][0])) ? Buffer.concat(bufs[0]) : ___toBuffer(bufs);};
-	s2a = function(s) { return Buffer(s, "binary"); };
-	bconcat = function(bufs) { return Buffer.isBuffer(bufs[0]) ? Buffer.concat(bufs) : [].concat.apply([], bufs); };
+	__toBuffer = function(bufs/*:any*/) { return (bufs[0].length > 0 && Buffer.isBuffer(bufs[0][0])) ? Buffer.concat(bufs[0]) : ___toBuffer(bufs);};
+	s2a = function(s/*:string*/) { return new Buffer(s, "binary"); };
+	bconcat = function(bufs/*:any*/) { return Buffer.isBuffer(bufs[0]) ? Buffer.concat(bufs) : [].concat.apply([], bufs); };
 }
 
 
@@ -56,7 +56,7 @@ var __readInt16LE = function(b, idx) { var u = b[idx+1]*(1<<8)+b[idx]; return (u
 var __readUInt32LE = function(b, idx) { return b[idx+3]*(1<<24)+(b[idx+2]<<16)+(b[idx+1]<<8)+b[idx]; };
 var __readInt32LE = function(b, idx) { return (b[idx+3]<<24)+(b[idx+2]<<16)+(b[idx+1]<<8)+b[idx]; };
 
-function ReadShift(size, t) {
+function ReadShift(size/*:number*/, t/*:?any*/) {
 	var oI, oS, type = 0;
 	switch(size) {
 		case 1: oI = __readUInt8(this, this.l); break;
@@ -67,13 +67,13 @@ function ReadShift(size, t) {
 	this.l+=size; if(type === 0) return oI; return oS;
 }
 
-function CheckField(hexstr, fld) {
+function CheckField(hexstr/*:string*/, fld/*:string*/) {
 	var m = __hexlify(this,this.l,hexstr.length>>1);
 	if(m !== hexstr) throw fld + 'Expected ' + hexstr + ' saw ' + m;
 	this.l += hexstr.length>>1;
 }
 
-function prep_blob(blob, pos) {
+function prep_blob(blob/*:any*/, pos/*:number*/) {
 	blob.l = pos;
 	blob.read_shift = ReadShift;
 	blob.chk = CheckField;

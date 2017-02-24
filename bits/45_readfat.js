@@ -6,6 +6,7 @@ function sleuth_fat(idx, cnt, sectors, ssz, fat_addrs) {
 		if(cnt !== 0) throw "DIFAT chain shorter than expected";
 	} else if(idx !== -1 /*FREESECT*/) {
 		var sector = sectors[idx], m = (ssz>>>2)-1;
+		if(!sector) return;
 		for(var i = 0; i < m; ++i) {
 			if((q = __readInt32LE(sector,i*4)) === ENDOFCHAIN) break;
 			fat_addrs.push(q);
@@ -29,13 +30,14 @@ function get_sector_list(sectors, start, fat_addrs, ssz, chkd) {
 		var addr = fat_addrs[Math.floor(j*4/ssz)];
 		jj = ((j*4) & modulus);
 		if(ssz < 4 + jj) throw "FAT boundary crossed: " + j + " 4 "+ssz;
+		if(!sectors[addr]) break;
 		j = __readInt32LE(sectors[addr], jj);
 	}
 	return {nodes: buf, data:__toBuffer([buf_chain])};
 }
 
 /** Chase down the sector linked lists */
-function make_sector_list(sectors, dir_start, fat_addrs, ssz) {
+function make_sector_list(sectors, dir_start, fat_addrs, ssz/*:number*/)/*:any*/ {
 	var sl = sectors.length, sector_list = new Array(sl);
 	var chkd = new Array(sl), buf, buf_chain;
 	var modulus = ssz - 1, i, j, k, jj;
@@ -51,6 +53,7 @@ function make_sector_list(sectors, dir_start, fat_addrs, ssz) {
 			var addr = fat_addrs[Math.floor(j*4/ssz)];
 			jj = ((j*4) & modulus);
 			if(ssz < 4 + jj) throw "FAT boundary crossed: " + j + " 4 "+ssz;
+			if(!sectors[addr]) break;
 			j = __readInt32LE(sectors[addr], jj);
 		}
 		sector_list[k] = {nodes: buf, data:__toBuffer([buf_chain])};

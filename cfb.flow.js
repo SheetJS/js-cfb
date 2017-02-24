@@ -1,8 +1,98 @@
-var DO_NOT_EXPORT_CFB = true;
 /* cfb.js (C) 2013-present SheetJS -- http://sheetjs.com */
 /* vim: set ts=2: */
 /*jshint eqnull:true */
 
+var Base64 = (function(){
+	var map = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+	return {
+		decode: function(input) {
+			var o = "";
+			var c1, c2, c3;
+			var e1, e2, e3, e4;
+			input = input.replace(/[^\w\+\/\=]/g, "");
+			for(var i = 0; i < input.length;) {
+				e1 = map.indexOf(input.charAt(i++));
+				e2 = map.indexOf(input.charAt(i++));
+				c1 = (e1 << 2) | (e2 >> 4);
+				o += String.fromCharCode(c1);
+
+				e3 = map.indexOf(input.charAt(i++));
+				c2 = ((e2 & 15) << 4) | (e3 >> 2);
+				if (e3 !== 64) { o += String.fromCharCode(c2); }
+
+				e4 = map.indexOf(input.charAt(i++));
+				c3 = ((e3 & 3) << 6) | e4;
+				if (e4 !== 64) { o += String.fromCharCode(c3); }
+			}
+			return o;
+		}
+	};
+})();
+
+var chr0 = /\u0000/g, chr1 = /[\u0001-\u0006]/;
+
+var s2a, _s2a;
+s2a = _s2a = function _s2a(s/*:string*/) { return s.split("").map(function(x){ return x.charCodeAt(0) & 0xff; }); };
+var __toBuffer, ___toBuffer;
+__toBuffer = ___toBuffer = function(bufs/*:any*/) { var x = []; for(var i = 0; i < bufs[0].length; ++i) { x.push.apply(x, bufs[0][i]); } return x; };
+var __utf16le, ___utf16le;
+__utf16le = ___utf16le = function(b,s,e) { var ss=[]; for(var i=s; i<e; i+=2) ss.push(String.fromCharCode(__readUInt16LE(b,i))); return ss.join("").replace(chr0,'').replace(chr1,'!'); };
+var __hexlify, ___hexlify;
+__hexlify = ___hexlify = function(b,s,l) { return b.slice(s,(s+l)).map(function(x){return (x<16?"0":"") + x.toString(16);}).join(""); };
+var bconcat = function(bufs/*:any*/) { return [].concat.apply([], bufs); };
+
+
+if(typeof Buffer !== "undefined") {
+	__utf16le = function(b,s,e) {
+		if(!Buffer.isBuffer(b)) return ___utf16le(b,s,e);
+		return b.toString('utf16le',s,e).replace(chr0,'').replace(chr1,'!');
+	};
+	__hexlify = function(b,s,l) { return Buffer.isBuffer(b) ? b.toString('hex',s,s+l) : ___hexlify(b,s,l); };
+	__toBuffer = function(bufs/*:any*/) { return (bufs[0].length > 0 && Buffer.isBuffer(bufs[0][0])) ? Buffer.concat(bufs[0]) : ___toBuffer(bufs);};
+	s2a = function(s/*:string*/) { return new Buffer(s, "binary"); };
+	bconcat = function(bufs/*:any*/) { return Buffer.isBuffer(bufs[0]) ? Buffer.concat(bufs) : [].concat.apply([], bufs); };
+}
+
+
+var __readUInt8 = function(b, idx) { return b[idx]; };
+var __readUInt16LE = function(b, idx) { return b[idx+1]*(1<<8)+b[idx]; };
+var __readInt16LE = function(b, idx) { var u = b[idx+1]*(1<<8)+b[idx]; return (u < 0x8000) ? u : (0xffff - u + 1) * -1; };
+var __readUInt32LE = function(b, idx) { return b[idx+3]*(1<<24)+(b[idx+2]<<16)+(b[idx+1]<<8)+b[idx]; };
+var __readInt32LE = function(b, idx) { return (b[idx+3]<<24)+(b[idx+2]<<16)+(b[idx+1]<<8)+b[idx]; };
+
+function ReadShift(size/*:number*/, t/*:?any*/) {
+	var oI, oS, type = 0;
+	switch(size) {
+		case 1: oI = __readUInt8(this, this.l); break;
+		case 2: oI = (t !== 'i' ? __readUInt16LE : __readInt16LE)(this, this.l); break;
+		case 4: oI = __readInt32LE(this, this.l); break;
+		case 16: type = 2; oS = __hexlify(this, this.l, size);
+	}
+	this.l+=size; if(type === 0) return oI; return oS;
+}
+
+function CheckField(hexstr/*:string*/, fld/*:string*/) {
+	var m = __hexlify(this,this.l,hexstr.length>>1);
+	if(m !== hexstr) throw fld + 'Expected ' + hexstr + ' saw ' + m;
+	this.l += hexstr.length>>1;
+}
+
+function prep_blob(blob/*:any*/, pos/*:number*/) {
+	blob.l = pos;
+	blob.read_shift = ReadShift;
+	blob.chk = CheckField;
+}
+
+/*::
+declare var DO_NOT_EXPORT_CFB:any;
+type SectorEntry = any;
+type SectorList = {
+	(k:string|number):SectorEntry;
+	name:?string;
+	fat_addrs:any;
+	ssz:number;
+}
+*/
 /* [MS-CFB] v20130118 */
 var CFB = (function _CFB(){
 var exports = {};
@@ -19,7 +109,7 @@ var difat_start = 0; // first mini FAT sector location
 var fat_addrs = []; // locations of FAT sectors
 
 /* [MS-CFB] 2.2 Compound File Header */
-var blob = file.slice(0,512);
+var blob/*:any*/ = file.slice(0,512);
 prep_blob(blob, 0);
 
 /* major version */
@@ -79,7 +169,7 @@ var sectors = sectorify(file, ssz);
 sleuth_fat(difat_start, ndfs, sectors, ssz, fat_addrs);
 
 /** Chains */
-var sector_list = make_sector_list(sectors, dir_start, fat_addrs, ssz);
+var sector_list/*:SectorList*/ = make_sector_list(sectors, dir_start, fat_addrs, ssz);
 
 sector_list[dir_start].name = "!Directory";
 if(nmfs > 0 && minifat_start !== ENDOFCHAIN) sector_list[minifat_start].name = "!MiniFAT";
@@ -88,7 +178,7 @@ sector_list.fat_addrs = fat_addrs;
 sector_list.ssz = ssz;
 
 /* [MS-CFB] 2.6.1 Compound File Directory Entry */
-var files = {}, Paths = [], FileIndex = [], FullPaths = [], FullPathDir = {};
+var files = {}, Paths/*:any*/ = [], FileIndex = [], FullPaths = [], FullPathDir = {};
 read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, FileIndex);
 
 build_full_paths(FileIndex, FullPathDir, FullPaths, Paths);
@@ -197,7 +287,7 @@ function make_find_path(FullPaths, Paths, FileIndex, files, root_name) {
 	var UCPaths = new Array(Paths.length), i;
 	for(i = 0; i < FullPaths.length; ++i) UCFullPaths[i] = FullPaths[i].toUpperCase().replace(chr0,'').replace(chr1,'!');
 	for(i = 0; i < Paths.length; ++i) UCPaths[i] = Paths[i].toUpperCase().replace(chr0,'').replace(chr1,'!');
-	return function find_path(path) {
+	return function find_path(path/*:string*/) {
 		var k;
 		if(path.charCodeAt(0) === 47 /* "/" */) { k=true; path = root_name + path; }
 		else k = path.indexOf("/") !== -1;
@@ -247,7 +337,7 @@ function get_sector_list(sectors, start, fat_addrs, ssz, chkd) {
 }
 
 /** Chase down the sector linked lists */
-function make_sector_list(sectors, dir_start, fat_addrs, ssz) {
+function make_sector_list(sectors, dir_start, fat_addrs, ssz/*:number*/)/*:any*/ {
 	var sl = sectors.length, sector_list = new Array(sl);
 	var chkd = new Array(sl), buf, buf_chain;
 	var modulus = ssz - 1, i, j, k, jj;
@@ -293,7 +383,7 @@ function read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, Fil
 			C:     blob.read_shift(4, 'i'),
 			clsid: blob.read_shift(16),
 			state: blob.read_shift(4, 'i')
-		});
+		}/*:any*/);
 		ctime = blob.read_shift(2) + blob.read_shift(2) + blob.read_shift(2) + blob.read_shift(2);
 		if(ctime !== 0) {
 			o.ctime = ctime; o.ct = read_date(blob, blob.l-8);
@@ -331,12 +421,12 @@ function read_date(blob, offset) {
 }
 
 var fs;
-function readFileSync(filename, options) {
+function readFileSync(filename/*:string*/, options/*:any*/) {
 	if(fs === undefined) fs = require('fs');
 	return parse(fs.readFileSync(filename), options);
 }
 
-function readSync(blob, options) {
+function readSync(blob/*:any*/, options/*:any*/) {
 	switch(options !== undefined && options.type !== undefined ? options.type : "base64") {
 		case "file": return readFileSync(blob, options);
 		case "base64": return parse(s2a(Base64.decode(blob)), options);

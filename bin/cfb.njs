@@ -15,14 +15,14 @@ if(program.args.length === 0 || !fs.existsSync(program.args[0])) {
 	process.exit(1);
 }
 
-var opts = {type:'file'};
+var opts = ({type:'file'}/*:any*/);
 if(program.dev) opts.WTF = true;
 
 var cfb = CFB.read(program.args[0], opts);
 if(program.dump) {
-	console.log("Full Paths:")
+	console.log("Full Paths:");
 	console.log(cfb.FullPaths.map(function(x) { return "  " + x; }).join("\n"));
-	console.log("Full Path Directory:")
+	console.log("Full Path Directory:");
 	console.log(cfb.FullPathDir);
 }
 if(!program.quiet && !program.dump) for(var i=0; i!=cfb.FullPaths.length; ++i) {
