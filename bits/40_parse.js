@@ -1,4 +1,4 @@
-function parse(file) {
+function parse(file/*:RawBytes*/, options/*:CFBReadOpts*/)/*:CFBContainer*/ {
 var mver = 3; // major version
 var ssz = 512; // sector size
 var nmfs = 0; // number of mini FAT sectors
@@ -7,10 +7,10 @@ var dir_start = 0; // first directory sector location
 var minifat_start = 0; // first mini FAT sector location
 var difat_start = 0; // first mini FAT sector location
 
-var fat_addrs = []; // locations of FAT sectors
+var fat_addrs/*:Array<number>*/ = []; // locations of FAT sectors
 
 /* [MS-CFB] 2.2 Compound File Header */
-var blob/*:any*/ = file.slice(0,512);
+var blob/*:CFBlob*/ = /*::(*/file.slice(0,512)/*:: :any)*/;
 prep_blob(blob, 0);
 
 /* major version */
@@ -22,14 +22,14 @@ switch(mver) {
 }
 
 /* reprocess header */
-if(ssz !== 512) { blob = file.slice(0,ssz); prep_blob(blob, 28 /* blob.l */); }
+if(ssz !== 512) { blob = /*::(*/file.slice(0,ssz)/*:: :any)*/; prep_blob(blob, 28 /* blob.l */); }
 /* Save header for final object */
-var header = file.slice(0,ssz);
+var header/*:RawBytes*/ = file.slice(0,ssz);
 
 check_shifts(blob, mver);
 
 // Number of Directory Sectors
-var nds = blob.read_shift(4, 'i');
+var nds/*:number*/ = blob.read_shift(4, 'i');
 if(mver === 3 && nds !== 0) throw new Error('# Directory Sectors: Expected 0 saw ' + nds);
 
 // Number of FAT Sectors
@@ -58,14 +58,14 @@ difat_start = blob.read_shift(4, 'i');
 ndfs = blob.read_shift(4, 'i');
 
 // Grab FAT Sector Locations
-for(var q, j = 0; j < 109; ++j) { /* 109 = (512 - blob.l)>>>2; */
+for(var q = -1, j = 0; j < 109; ++j) { /* 109 = (512 - blob.l)>>>2; */
 	q = blob.read_shift(4, 'i');
 	if(q<0) break;
 	fat_addrs[j] = q;
 }
 
 /** Break the file up into sectors */
-var sectors = sectorify(file, ssz);
+var sectors/*:Array<RawBytes>*/ = sectorify(file, ssz);
 
 sleuth_fat(difat_start, ndfs, sectors, ssz, fat_addrs);
 
@@ -79,13 +79,12 @@ sector_list.fat_addrs = fat_addrs;
 sector_list.ssz = ssz;
 
 /* [MS-CFB] 2.6.1 Compound File Directory Entry */
-var files = {}, Paths/*:any*/ = [], FileIndex = [], FullPaths = [], FullPathDir = {};
+var files/*:CFBFiles*/ = {}, Paths/*:Array<string>*/ = [], FileIndex/*:CFBFileIndex*/ = [], FullPaths/*:Array<string>*/ = [], FullPathDir = {};
 read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, FileIndex);
 
 build_full_paths(FileIndex, FullPathDir, FullPaths, Paths);
 
-var root_name = Paths.shift();
-Paths.root = root_name;
+var root_name/*:string*/ = Paths.shift();
 
 /* [MS-CFB] 2.6.4 (Unicode 3.0.1 case conversion) */
 var find_path = make_find_path(FullPaths, Paths, FileIndex, files, root_name);

@@ -39,7 +39,7 @@ var workbook = cfb.find('Workbook')
 
 # API
 
-Typescript definitions are maintained in `misc/cfb.d.ts`.
+Typescript definitions are maintained in `types/index.d.ts`.
 
 The CFB object exposes the following methods and properties:
 

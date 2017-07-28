@@ -31,15 +31,23 @@ var Base64 = (function(){
 
 var chr0 = /\u0000/g, chr1 = /[\u0001-\u0006]/;
 
-var s2a, _s2a;
-s2a = _s2a = function _s2a(s) { return s.split("").map(function(x){ return x.charCodeAt(0) & 0xff; }); };
-var __toBuffer, ___toBuffer;
-__toBuffer = ___toBuffer = function(bufs) { var x = []; for(var i = 0; i < bufs[0].length; ++i) { x.push.apply(x, bufs[0][i]); } return x; };
-var __utf16le, ___utf16le;
-__utf16le = ___utf16le = function(b,s,e) { var ss=[]; for(var i=s; i<e; i+=2) ss.push(String.fromCharCode(__readUInt16LE(b,i))); return ss.join("").replace(chr0,'').replace(chr1,'!'); };
-var __hexlify, ___hexlify;
-__hexlify = ___hexlify = function(b,s,l) { return b.slice(s,(s+l)).map(function(x){return (x<16?"0":"") + x.toString(16);}).join(""); };
-var bconcat = function(bufs) { return [].concat.apply([], bufs); };
+var s2a = function _s2a(s) { return s.split("").map(function(x){ return x.charCodeAt(0) & 0xff; }); };
+var _s2a = s2a;
+var __toBuffer = function(bufs) { var x = []; for(var i = 0; i < bufs[0].length; ++i) { x.push.apply(x, bufs[0][i]); } return x; };
+var ___toBuffer = __toBuffer;
+var __utf16le = function(b,s,e) { var ss=[]; for(var i=s; i<e; i+=2) ss.push(String.fromCharCode(__readUInt16LE(b,i))); return ss.join("").replace(chr0,'').replace(chr1,'!'); };
+var ___utf16le = __utf16le;
+var __hexlify = function(b,s,l) { var ss=[]; for(var i=s; i<s+l; ++i) ss.push(("0" + b[i].toString(16)).slice(-2)); return ss.join(""); };
+var ___hexlify = __hexlify;
+var __bconcat = function(bufs) {
+	if(Array.isArray(bufs[0])) return [].concat.apply([], bufs);
+	var maxlen = 0, i = 0;
+	for(i = 0; i < bufs.length; ++i) maxlen += bufs[i].length;
+	var o = new Uint8Array(maxlen);
+	for(i = 0, maxlen = 0; i < bufs.length; maxlen += bufs[i].length, ++i) o.set(bufs[i], maxlen);
+	return o;
+};
+var bconcat = __bconcat;
 
 
 if(typeof Buffer !== "undefined") {
@@ -48,9 +56,9 @@ if(typeof Buffer !== "undefined") {
 		return b.toString('utf16le',s,e).replace(chr0,'').replace(chr1,'!');
 	};
 	__hexlify = function(b,s,l) { return Buffer.isBuffer(b) ? b.toString('hex',s,s+l) : ___hexlify(b,s,l); };
-	__toBuffer = function(bufs) { return (bufs[0].length > 0 && Buffer.isBuffer(bufs[0][0])) ? Buffer.concat(bufs[0]) : ___toBuffer(bufs);};
+	__toBuffer = function(bufs) { return (bufs[0].length > 0 && Buffer.isBuffer(bufs[0][0])) ? Buffer.concat((bufs[0])) : ___toBuffer(bufs);};
 	s2a = function(s) { return new Buffer(s, "binary"); };
-	bconcat = function(bufs) { return Buffer.isBuffer(bufs[0]) ? Buffer.concat(bufs) : [].concat.apply([], bufs); };
+	bconcat = function(bufs) { return Buffer.isBuffer(bufs[0]) ? Buffer.concat(bufs) : __bconcat(bufs); };
 }
 
 
@@ -73,7 +81,7 @@ function ReadShift(size, t) {
 
 function CheckField(hexstr, fld) {
 	var m = __hexlify(this,this.l,hexstr.length>>1);
-	if(m !== hexstr) throw fld + 'Expected ' + hexstr + ' saw ' + m;
+	if(m !== hexstr) throw new Error(fld + 'Expected ' + hexstr + ' saw ' + m);
 	this.l += hexstr.length>>1;
 }
 
@@ -86,8 +94,8 @@ function prep_blob(blob, pos) {
 /* [MS-CFB] v20130118 */
 var CFB = (function _CFB(){
 var exports = {};
-exports.version = '0.11.0';
-function parse(file) {
+exports.version = '0.12.0';
+function parse(file, options) {
 var mver = 3; // major version
 var ssz = 512; // sector size
 var nmfs = 0; // number of mini FAT sectors
@@ -107,7 +115,7 @@ var mv = check_get_mver(blob);
 mver = mv[0];
 switch(mver) {
 	case 3: ssz = 512; break; case 4: ssz = 4096; break;
-	default: throw "Major Version: Expected 3 or 4 saw " + mver;
+	default: throw new Error("Major Version: Expected 3 or 4 saw " + mver);
 }
 
 /* reprocess header */
@@ -119,7 +127,7 @@ check_shifts(blob, mver);
 
 // Number of Directory Sectors
 var nds = blob.read_shift(4, 'i');
-if(mver === 3 && nds !== 0) throw '# Directory Sectors: Expected 0 saw ' + nds;
+if(mver === 3 && nds !== 0) throw new Error('# Directory Sectors: Expected 0 saw ' + nds);
 
 // Number of FAT Sectors
 //var nfs = blob.read_shift(4, 'i');
@@ -147,7 +155,7 @@ difat_start = blob.read_shift(4, 'i');
 ndfs = blob.read_shift(4, 'i');
 
 // Grab FAT Sector Locations
-for(var q, j = 0; j < 109; ++j) { /* 109 = (512 - blob.l)>>>2; */
+for(var q = -1, j = 0; j < 109; ++j) { /* 109 = (512 - blob.l)>>>2; */
 	q = blob.read_shift(4, 'i');
 	if(q<0) break;
 	fat_addrs[j] = q;
@@ -174,7 +182,6 @@ read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, FileIndex);
 build_full_paths(FileIndex, FullPathDir, FullPaths, Paths);
 
 var root_name = Paths.shift();
-Paths.root = root_name;
 
 /* [MS-CFB] 2.6.4 (Unicode 3.0.1 case conversion) */
 var find_path = make_find_path(FullPaths, Paths, FileIndex, files, root_name);
@@ -205,13 +212,14 @@ function check_shifts(blob, mver) {
 	var shift = 0x09;
 
 	// Byte Order
-	blob.chk('feff', 'Byte Order: ');
+	//blob.chk('feff', 'Byte Order: '); // note: some writers put 0xffff
+	blob.l += 2;
 
 	// Sector Shift
 	switch((shift = blob.read_shift(2))) {
-		case 0x09: if(mver !== 3) throw 'MajorVersion/SectorShift Mismatch'; break;
-		case 0x0c: if(mver !== 4) throw 'MajorVersion/SectorShift Mismatch'; break;
-		default: throw 'Sector Shift: Expected 9 or 12 saw ' + shift;
+		case 0x09: if(mver != 3) throw new Error('Sector Shift: Expected 9 saw ' + shift); break;
+		case 0x0c: if(mver != 4) throw new Error('Sector Shift: Expected 12 saw ' + shift); break;
+		default: throw new Error('Sector Shift: Expected 9 or 12 saw ' + shift);
 	}
 
 	// Mini Sector Shift
@@ -224,7 +232,7 @@ function check_shifts(blob, mver) {
 /** Break the file up into sectors */
 function sectorify(file, ssz) {
 	var nsectors = Math.ceil(file.length/ssz)-1;
-	var sectors = new Array(nsectors);
+	var sectors = [];
 	for(var i=1; i < nsectors; ++i) sectors[i-1] = file.slice(i*ssz,(i+1)*ssz);
 	sectors[nsectors-1] = file.slice(nsectors*ssz);
 	return sectors;
@@ -233,7 +241,7 @@ function sectorify(file, ssz) {
 /* [MS-CFB] 2.6.4 Red-Black Tree */
 function build_full_paths(FI, FPD, FP, Paths) {
 	var i = 0, L = 0, R = 0, C = 0, j = 0, pl = Paths.length;
-	var dad = new Array(pl), q = new Array(pl);
+	var dad = [], q = [];
 
 	for(; i < pl; ++i) { dad[i]=q[i]=i; FP[i]=Paths[i]; }
 
@@ -273,12 +281,12 @@ function build_full_paths(FI, FPD, FP, Paths) {
 
 /* [MS-CFB] 2.6.4 */
 function make_find_path(FullPaths, Paths, FileIndex, files, root_name) {
-	var UCFullPaths = new Array(FullPaths.length);
-	var UCPaths = new Array(Paths.length), i;
+	var UCFullPaths = [];
+	var UCPaths = [], i = 0;
 	for(i = 0; i < FullPaths.length; ++i) UCFullPaths[i] = FullPaths[i].toUpperCase().replace(chr0,'').replace(chr1,'!');
 	for(i = 0; i < Paths.length; ++i) UCPaths[i] = Paths[i].toUpperCase().replace(chr0,'').replace(chr1,'!');
 	return function find_path(path) {
-		var k;
+		var k = false;
 		if(path.charCodeAt(0) === 47 /* "/" */) { k=true; path = root_name + path; }
 		else k = path.indexOf("/") !== -1;
 		var UCPath = path.toUpperCase().replace(chr0,'').replace(chr1,'!');
@@ -291,9 +299,9 @@ function make_find_path(FullPaths, Paths, FileIndex, files, root_name) {
 /** Chase down the rest of the DIFAT chain to build a comprehensive list
     DIFAT chains by storing the next sector number as the last 32 bytes */
 function sleuth_fat(idx, cnt, sectors, ssz, fat_addrs) {
-	var q;
+	var q = ENDOFCHAIN;
 	if(idx === ENDOFCHAIN) {
-		if(cnt !== 0) throw "DIFAT chain shorter than expected";
+		if(cnt !== 0) throw new Error("DIFAT chain shorter than expected");
 	} else if(idx !== -1 /*FREESECT*/) {
 		var sector = sectors[idx], m = (ssz>>>2)-1;
 		if(!sector) return;
@@ -308,18 +316,16 @@ function sleuth_fat(idx, cnt, sectors, ssz, fat_addrs) {
 /** Follow the linked list of sectors for a given starting point */
 function get_sector_list(sectors, start, fat_addrs, ssz, chkd) {
 	var sl = sectors.length;
-	var buf, buf_chain;
-	if(!chkd) chkd = new Array(sl);
-	var modulus = ssz - 1, j, jj;
-	buf = [];
-	buf_chain = [];
+	var buf = [], buf_chain = [];
+	if(!chkd) chkd = [];
+	var modulus = ssz - 1, j = 0, jj = 0;
 	for(j=start; j>=0;) {
 		chkd[j] = true;
 		buf[buf.length] = j;
 		buf_chain.push(sectors[j]);
 		var addr = fat_addrs[Math.floor(j*4/ssz)];
 		jj = ((j*4) & modulus);
-		if(ssz < 4 + jj) throw "FAT boundary crossed: " + j + " 4 "+ssz;
+		if(ssz < 4 + jj) throw new Error("FAT boundary crossed: " + j + " 4 "+ssz);
 		if(!sectors[addr]) break;
 		j = __readInt32LE(sectors[addr], jj);
 	}
@@ -328,13 +334,13 @@ function get_sector_list(sectors, start, fat_addrs, ssz, chkd) {
 
 /** Chase down the sector linked lists */
 function make_sector_list(sectors, dir_start, fat_addrs, ssz) {
-	var sl = sectors.length, sector_list = new Array(sl);
-	var chkd = new Array(sl), buf, buf_chain;
-	var modulus = ssz - 1, i, j, k, jj;
+	var sl = sectors.length, sector_list = ([]);
+	var chkd = [], buf = [], buf_chain = [];
+	var modulus = ssz - 1, i=0, j=0, k=0, jj=0;
 	for(i=0; i < sl; ++i) {
-		buf = [];
+		buf = ([]);
 		k = (i + dir_start); if(k >= sl) k-=sl;
-		if(chkd[k] === true) continue;
+		if(chkd[k]) continue;
 		buf_chain = [];
 		for(j=k; j>=0;) {
 			chkd[j] = true;
@@ -342,29 +348,28 @@ function make_sector_list(sectors, dir_start, fat_addrs, ssz) {
 			buf_chain.push(sectors[j]);
 			var addr = fat_addrs[Math.floor(j*4/ssz)];
 			jj = ((j*4) & modulus);
-			if(ssz < 4 + jj) throw "FAT boundary crossed: " + j + " 4 "+ssz;
+			if(ssz < 4 + jj) throw new Error("FAT boundary crossed: " + j + " 4 "+ssz);
 			if(!sectors[addr]) break;
 			j = __readInt32LE(sectors[addr], jj);
 		}
-		sector_list[k] = {nodes: buf, data:__toBuffer([buf_chain])};
+		sector_list[k] = ({nodes: buf, data:__toBuffer([buf_chain])});
 	}
 	return sector_list;
 }
 
 /* [MS-CFB] 2.6.1 Compound File Directory Entry */
 function read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, FileIndex) {
-	var blob;
 	var minifat_store = 0, pl = (Paths.length?2:0);
 	var sector = sector_list[dir_start].data;
-	var i = 0, namelen = 0, name, o, ctime, mtime;
+	var i = 0, namelen = 0, name;
 	for(; i < sector.length; i+= 128) {
-		blob = sector.slice(i, i+128);
+		var blob = sector.slice(i, i+128);
 		prep_blob(blob, 64);
 		namelen = blob.read_shift(2);
 		if(namelen === 0) continue;
 		name = __utf16le(blob,0,namelen-pl);
 		Paths.push(name);
-		o = ({
+		var o = ({
 			name:  name,
 			type:  blob.read_shift(1),
 			color: blob.read_shift(1),
@@ -372,16 +377,14 @@ function read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, Fil
 			R:     blob.read_shift(4, 'i'),
 			C:     blob.read_shift(4, 'i'),
 			clsid: blob.read_shift(16),
-			state: blob.read_shift(4, 'i')
+			state: blob.read_shift(4, 'i'),
+			start: 0,
+			size: 0
 		});
-		ctime = blob.read_shift(2) + blob.read_shift(2) + blob.read_shift(2) + blob.read_shift(2);
-		if(ctime !== 0) {
-			o.ctime = ctime; o.ct = read_date(blob, blob.l-8);
-		}
-		mtime = blob.read_shift(2) + blob.read_shift(2) + blob.read_shift(2) + blob.read_shift(2);
-		if(mtime !== 0) {
-			o.mtime = mtime; o.mt = read_date(blob, blob.l-8);
-		}
+		var ctime = blob.read_shift(2) + blob.read_shift(2) + blob.read_shift(2) + blob.read_shift(2);
+		if(ctime !== 0) o.ct = read_date(blob, blob.l-8);
+		var mtime = blob.read_shift(2) + blob.read_shift(2) + blob.read_shift(2) + blob.read_shift(2);
+		if(mtime !== 0) o.mt = read_date(blob, blob.l-8);
 		o.start = blob.read_shift(4, 'i');
 		o.size = blob.read_shift(4, 'i');
 		if(o.type === 5) { /* root */
@@ -392,12 +395,12 @@ function read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, Fil
 			o.storage = 'fat';
 			if(sector_list[o.start] === undefined) sector_list[o.start] = get_sector_list(sectors, o.start, sector_list.fat_addrs, sector_list.ssz);
 			sector_list[o.start].name = o.name;
-			o.content = sector_list[o.start].data.slice(0,o.size);
+			o.content = (sector_list[o.start].data.slice(0,o.size));
 			prep_blob(o.content, 0);
 		} else {
 			o.storage = 'minifat';
 			if(minifat_store !== ENDOFCHAIN && o.start !== ENDOFCHAIN) {
-				o.content = sector_list[minifat_store].data.slice(o.start*MSSZ,o.start*MSSZ+o.size);
+				o.content = (sector_list[minifat_store].data.slice(o.start*MSSZ,o.start*MSSZ+o.size));
 				prep_blob(o.content, 0);
 			}
 		}
@@ -412,17 +415,17 @@ function read_date(blob, offset) {
 
 var fs;
 function readFileSync(filename, options) {
-	if(fs === undefined) fs = require('fs');
+	if(fs == null) fs = require('fs');
 	return parse(fs.readFileSync(filename), options);
 }
 
 function readSync(blob, options) {
-	switch(options !== undefined && options.type !== undefined ? options.type : "base64") {
+	switch(options && options.type || "base64") {
 		case "file": return readFileSync(blob, options);
 		case "base64": return parse(s2a(Base64.decode(blob)), options);
 		case "binary": return parse(s2a(blob), options);
 	}
-	return parse(blob);
+	return parse(blob, options);
 }
 
 /** CFB Constants */

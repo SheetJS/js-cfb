@@ -1,7 +1,7 @@
 /* [MS-CFB] 2.6.4 Red-Black Tree */
-function build_full_paths(FI, FPD, FP, Paths) {
+function build_full_paths(FI/*:CFBFileIndex*/, FPD/*:CFBFullPathDir*/, FP/*:Array<string>*/, Paths/*:Array<string>*/)/*:void*/ {
 	var i = 0, L = 0, R = 0, C = 0, j = 0, pl = Paths.length;
-	var dad = new Array(pl), q = new Array(pl);
+	var dad/*:Array<number>*/ = [], q/*:Array<number>*/ = [];
 
 	for(; i < pl; ++i) { dad[i]=q[i]=i; FP[i]=Paths[i]; }
 

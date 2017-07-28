@@ -12,6 +12,7 @@ DEPS=$(sort $(wildcard bits/*.js))
 TARGET=$(LIB).js
 FLOWTARGET=$(LIB).flow.js
 FLOWTGTS=$(TARGET) $(AUXTARGETS)
+UGLIFYOPTS=--support-ie8
 CLOSURE=/usr/local/lib/node_modules/google-closure-compiler/compiler.jar
 
 ## Main Targets
@@ -47,7 +48,7 @@ init: ## Initial setup for development
 dist: dist-deps $(TARGET) ## Prepare JS files for distribution
 	cp $(TARGET) dist/
 	cp LICENSE dist/
-	uglifyjs $(TARGET) -o dist/$(LIB).min.js --source-map dist/$(LIB).min.map --preamble "$$(head -n 1 bits/00_header.js)"
+	uglifyjs $(UGLIFYOPTS) $(TARGET) -o dist/$(LIB).min.js --source-map dist/$(LIB).min.map --preamble "$$(head -n 1 bits/00_header.js)"
 	misc/strip_sourcemap.sh dist/$(LIB).min.js
 
 .PHONY: dist-deps
@@ -81,7 +82,12 @@ $(TESTFMT): test_%:
 ## Code Checking
 
 .PHONY: lint
-lint: $(TARGET) $(AUXTARGETS) ## Run jshint and jscs checks
+lint: $(TARGET) $(AUXTARGETS) ## Run eslint checks
+	@eslint --ext .js,.njs,.json,.html,.htm $(TARGET) $(AUXTARGETS) $(CMDS) $(HTMLLINT) package.json
+	if [ -e $(CLOSURE) ]; then java -jar $(CLOSURE) $(REQS) $(FLOWTARGET) --jscomp_warning=reportUnknownTypes >/dev/null; fi
+
+.PHONY: old-lint
+old-lint: $(TARGET) $(AUXTARGETS) ## Run jshint and jscs checks
 	@jshint --show-non-errors $(TARGET) $(AUXTARGETS)
 	@jshint --show-non-errors $(CMDS)
 	@jshint --show-non-errors package.json
@@ -89,18 +95,17 @@ lint: $(TARGET) $(AUXTARGETS) ## Run jshint and jscs checks
 	@jscs $(TARGET) $(AUXTARGETS)
 	if [ -e $(CLOSURE) ]; then java -jar $(CLOSURE) $(REQS) $(FLOWTARGET) --jscomp_warning=reportUnknownTypes >/dev/null; fi
 
+.PHONY: tslint
+tslint: $(TARGET) ## Run typescript checks
+	#@npm install dtslint typescript
+	@npm run-script dtslint
+
 .PHONY: flow
 flow: lint ## Run flow checker
 	@flow check --all --show-all-errors
 
 .PHONY: cov
 cov: misc/coverage.html ## Run coverage test
-
-#*                      To run coverage tests for one format, make cov_<fmt>
-COVFMT=$(patsubst %,cov_%,$(FMT))
-.PHONY: $(COVFMT)
-$(COVFMT): cov_%:
-	FMTS=$* make cov
 
 misc/coverage.html: $(TARGET) test.js
 	mocha --require blanket -R html-cov -t 20000 > $@

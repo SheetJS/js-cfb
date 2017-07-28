@@ -1,6 +1,6 @@
 {
   "name": "cfb",
-  "version": "0.11.1",
+  "version": "0.12.0",
   "author": "sheetjs",
   "description": "Compound File Binary File Format extractor",
   "keywords": [ "cfb", "compression", "office" ],
@@ -8,32 +8,37 @@
     "cfb": "./bin/cfb.njs"
   },
   "main": "./cfb",
-  "files": [
-    "LICENSE",
-    "README.md",
-    "bin/",
-    "dist/",
-    "cfb.js",
-    "xlscfb.flow.js"
-  ],
+  "types": "types",
+  "browser": {
+    "node": false,
+    "process": false,
+    "fs": false
+  },
   "dependencies": {
-    "commander":""
+    "commander":"~2.11.0"
   },
   "devDependencies": {
-    "mocha":"",
-    "xlsjs":"",
-    "uglify-js":""
+    "mocha":"~2.5.3",
+    "blanket": "~1.2.3",
+    "@sheetjs/uglify-js":"~2.7.3",
+    "@types/node":"^8.0.7",
+    "@types/commander":"^2.9.0",
+    "dtslint": "^0.1.2",
+    "typescript": "2.2.0"
   },
   "repository": { "type":"git", "url":"git://github.com/SheetJS/js-cfb.git" },
   "scripts": {
     "pretest": "make init",
-    "test": "make test"
+    "test": "make test",
+    "dtslint": "dtslint types"
   },
   "config": {
     "blanket": {
       "pattern": "cfb.js"
     }
   },
+  "files": [ "LICENSE", "README.md", "bin/", "dist/", "types/index.d.ts", "types/tsconfig.json", "cfb.js", "xlscfb.flow.js" ],
+  "homepage": "http://sheetjs.com/opensource",
   "bugs": { "url": "https://github.com/SheetJS/js-cfb/issues" },
   "license": "Apache-2.0",
   "engines": { "node": ">=0.8" }
