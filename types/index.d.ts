@@ -10,6 +10,9 @@ export function parse(f: CFB$Blob, options?: CFBParsingOptions): CFBContainer;
 /** Read a blob or file or binary string */
 export function read(f: CFB$Blob | string, options?: CFBParsingOptions): CFBContainer;
 
+/** Find a file entry given a path or file name */
+export function find(cfb: CFBContainer, path: string): CFBEntry | null;
+
 /** Utility functions */
 export const utils: CFB$Utils;
 
@@ -18,6 +21,8 @@ export const utils: CFB$Utils;
 export interface CFBParsingOptions {
   /** Input data encoding */
   type?: 'base64' | 'binary' | 'buffer' | 'file' | 'array';
+  /** If true, throw errors when features are not understood */
+  WTF?: boolean;
 }
 
 export type CFB$Blob = Buffer | number[] | Uint8Array;
@@ -85,9 +90,9 @@ export interface CFBContainer {
 
   /* Raw Content, in chunks (Buffer when available, Array of bytes otherwise) */
   raw: {
-		header: CFB$Blob,
-		sectors: CFB$Blob[];
-	};
+    header: CFB$Blob,
+    sectors: CFB$Blob[];
+  };
 }
 
 /** General utilities */

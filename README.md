@@ -5,7 +5,7 @@ format used in many Microsoft file types (such as XLS and DOC)
 
 # Utility Installation and Usage
 
-The package is available on NPM:
+With [npm](https://www.npmjs.org/package/cfb):
 
 ```bash
 $ npm install -g cfb
@@ -14,7 +14,7 @@ $ cfb path/to/CFB/file
 
 The command will extract the storages and streams in the container, generating
 files that line up with the tree-based structure of the storage.  Metadata such
-as the red-black tree are discarded.
+as the red-black tree are discarded.  The `-l` option displays a manifest.
 
 # Library Installation and Usage
 
@@ -34,8 +34,11 @@ For example, to get the Workbook content from an XLS file:
 
 ```js
 var cfb = CFB.read(filename, {type: 'file'});
-var workbook = cfb.find('Workbook')
+var workbook = cfb.find('Workbook');
+var data = workbook.content;
 ```
+
+The `xlscfb.js` file is designed to be embedded in [js-xlsx](http://git.io/xlsx)
 
 # API
 
@@ -52,14 +55,15 @@ parsed representation of the data.
 - `base64`: `blob` should be a base64 string
 - `binary`: `blob` should be a binary string
 
+`CFB.find(cfb, path)` performs a case-insensitive match for the path (or file
+name, if there are no slashes) and returns an entry object or null if not found.
+
 ## Container Object Description
 
 The object returned by `parse` and `read` can be found in the source (`rval`).
 It has the following properties and methods:
 
-- `.find(path)` performs a case-insensitive match for the path (or file name, if
-  there are no slashes) and returns an entry object (described later) or null if
-  not found
+- `.find(path)` is equivalent to `CFB.find(cfb, path)` and should not be used.
 
 - `.FullPaths` is an array of the names of all of the streams (files) and
   storages (directories) in the container.  The paths are properly prefixed from
@@ -83,14 +87,6 @@ the container object.
   `2 (stream)` for files, `1 (storage)` for dirs, `5 (root)` for root)
 - `.content` is a Buffer/Array with the raw content
 - `.ct`/`.mt` are the creation and modification time (if provided in file)
-
-# Notes
-
-Case comparison has not been verified for non-ASCII characters
-
-Writing is not supported.  It is in the works, but it has not yet been released.
-
-The `xlscfb.js` file is designed to be embedded in [js-xlsx](http://git.io/xlsx)
 
 # License
 

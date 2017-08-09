@@ -18,19 +18,28 @@
 #b64data{
 	width:100%;
 }
+a { text-decoration: none }
 </style>
 </head>
 <body>
-<b>JS-CFB Live Demo</b><br />
+<pre>
+<b><a href="http://sheetjs.com">SheetJS CFB Preview Live Demo</a></b>
 
+<a href="https://github.com/SheetJS/js-cfb">Source Code Repo</a>
+<a href="https://github.com/SheetJS/js-cfb/issues">Issues?  Something look weird?  Click here and report an issue</a>
 <div id="drop">Drop an XLS file here to see the CFB structure.</div>
-Advanced Demo Options: <br />
-Use readAsBinaryString: (when available) <input type="checkbox" name="userabs" checked><br />
+
+<b>Advanced Demo Options:</b>
+Use readAsBinaryString: (when available) <input type="checkbox" name="userabs" checked>
+</pre>
 <pre id="out"></pre>
 <br />
+<script src="https://unpkg.com/printj@1.1.0/dist/printj.min.js"></script>
 <script src="cfb.js"></script>
 <script>
 /*jshint browser:true */
+/* eslint-env browser */
+/* eslint no-use-before-define:0 */
 /*global CFB, out */
 var rABS = typeof FileReader !== "undefined" && typeof FileReader.prototype !== "undefined" && typeof FileReader.prototype.readAsBinaryString !== "undefined";
 if(!rABS) {
@@ -45,9 +54,41 @@ function fixdata(data) {
 	return o;
 }
 
-function process_data(data) {
-	if(out.innerText === undefined) out.textContent = data.FullPaths;
-	else out.innerText = data.FullPaths.join("\n");
+function get_manifest(cfb) {
+	var out = [];
+	var sprintf = PRINTJ.sprintf;
+	
+	var format_date = function(date/*:Date*/)/*:string*/ {
+		return sprintf("%02u-%02u-%02u %02u:%02u", date.getUTCMonth()+1, date.getUTCDate(), date.getUTCFullYear()%100, date.getUTCHours(), date.getUTCMinutes());
+	};
+
+	var basetime = new Date(1980,0,1);
+	var cnt = 0;
+	var rootsize = 0, filesize = 0;
+	out.push("  Length     Date   Time    Name");
+	out.push(" --------    ----   ----    ----");
+	cfb.FileIndex.forEach(function(file, i) {
+		switch(file.type) {
+			case 5:
+				basetime = file.ct || file.mt || basetime;
+				rootsize = file.size;
+				break;
+			case 2:
+				out.push(sprintf("%9lu  %s   %s", file.size, format_date(basetime), cfb.FullPaths[i]));
+				filesize += file.size;
+				++cnt;
+		}
+	});
+	out.push(" --------                   -------");
+	out.push(sprintf("%9lu                   %lu file%s", rootsize || filesize, cnt, (cnt !== 1 ? "s" : "")));
+
+	return out.join("\n");	
+}
+
+function process_data(cfb) {
+	var output = get_manifest(cfb);
+	if(out.innerText === undefined) out.textContent = output
+	else out.innerText = output;
 }
 
 var drop = document.getElementById('drop');
@@ -87,6 +128,17 @@ if(drop.addEventListener) {
 	drop.addEventListener('dragover', handleDragover, false);
 	drop.addEventListener('drop', handleDrop, false);
 }
+</script>
+<script type="text/javascript">
+	var _gaq = _gaq || [];
+	_gaq.push(['_setAccount', 'UA-36810333-1']);
+	_gaq.push(['_trackPageview']);
+
+	(function() {
+		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	})();
 </script>
 </body>
 </html>

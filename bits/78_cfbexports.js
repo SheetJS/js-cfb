@@ -1,3 +1,4 @@
+exports.find = find;
 exports.read = readSync;
 exports.parse = parse;
 exports.utils = {

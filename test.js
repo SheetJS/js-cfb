@@ -19,18 +19,35 @@ var dir = "./test_files/";
 
 function parsetest(x, cfb) {
 	describe(x + ' should have basic parts', function() {
-		it('should find relative path', function() {
+		/* cfb.find interface */
+		it('should find relative path using cfb#find', function() {
 			switch(x.substr(-4)) {
 				case '.xls': if(!cfb.find('Workbook') && !cfb.find('Book')) throw new Error("Cannot find workbook for " + x); break;
 				case '.ppt': if(!cfb.find('PowerPoint Document')) throw new Error("Cannot find presentation for " + x); break;
 				case '.doc': if(!cfb.find('WordDocument') && !cfb.find('Word Document')) throw new Error("Cannot find doc for " + x); break;
 			}
 		});
-		it('should find absolute path', function() {
+		it('should find absolute path using cfb#find', function() {
 			switch(x.substr(-4)) {
 				case '.xls': if(!cfb.find('/Workbook') && !cfb.find('/Book')) throw new Error("Cannot find workbook for " + x); break;
 				case '.ppt': if(!cfb.find('/PowerPoint Document')) throw new Error("Cannot find presentation for " + x); break;
 				case '.doc': if(!cfb.find('/WordDocument') && !cfb.find('/Word Document')) throw new Error("Cannot find doc for " + x); break;
+			}
+		});
+
+		/* CFB.find function */
+		it('should find relative path using CFB.find', function() {
+			switch(x.substr(-4)) {
+				case '.xls': if(!CFB.find(cfb, 'Workbook') && !CFB.find(cfb, 'Book')) throw new Error("Cannot find workbook for " + x); break;
+				case '.ppt': if(!CFB.find(cfb, 'PowerPoint Document')) throw new Error("Cannot find presentation for " + x); break;
+				case '.doc': if(!CFB.find(cfb, 'WordDocument') && !CFB.find(cfb, 'Word Document')) throw new Error("Cannot find doc for " + x); break;
+			}
+		});
+		it('should find absolute path using CFB.find', function() {
+			switch(x.substr(-4)) {
+				case '.xls': if(!CFB.find(cfb, '/Workbook') && !CFB.find(cfb, '/Book')) throw new Error("Cannot find workbook for " + x); break;
+				case '.ppt': if(!CFB.find(cfb, '/PowerPoint Document')) throw new Error("Cannot find presentation for " + x); break;
+				case '.doc': if(!CFB.find(cfb, '/WordDocument') && !CFB.find(cfb, '/Word Document')) throw new Error("Cannot find doc for " + x); break;
 			}
 		});
 	});
