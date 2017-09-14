@@ -12,7 +12,7 @@ DEPS=$(sort $(wildcard bits/*.js))
 TARGET=$(LIB).js
 FLOWTARGET=$(LIB).flow.js
 FLOWTGTS=$(TARGET) $(AUXTARGETS)
-UGLIFYOPTS=--support-ie8
+UGLIFYOPTS=--support-ie8 -m
 CLOSURE=/usr/local/lib/node_modules/google-closure-compiler/compiler.jar
 
 ## Main Targets
@@ -48,7 +48,7 @@ init: ## Initial setup for development
 dist: dist-deps $(TARGET) ## Prepare JS files for distribution
 	cp $(TARGET) dist/
 	cp LICENSE dist/
-	uglifyjs $(UGLIFYOPTS) $(TARGET) -o dist/$(LIB).min.js --source-map dist/$(LIB).min.map --preamble "$$(head -n 1 bits/00_header.js)"
+	uglifyjs $(TARGET) $(UGLIFYOPTS) -o dist/$(LIB).min.js --source-map dist/$(LIB).min.map --preamble "$$(head -n 1 bits/00_header.js)"
 	misc/strip_sourcemap.sh dist/$(LIB).min.js
 
 .PHONY: dist-deps
@@ -102,7 +102,7 @@ tslint: $(TARGET) ## Run typescript checks
 
 .PHONY: flow
 flow: lint ## Run flow checker
-	@flow check --all --show-all-errors
+	@flow check --all --show-all-errors --include-warnings
 
 .PHONY: cov
 cov: misc/coverage.html ## Run coverage test

@@ -5,6 +5,7 @@ var MSSZ = 64; /* Mini Sector Size = 1<<6 */
 var ENDOFCHAIN = -2;
 /* 2.2 Compound File Header */
 var HEADER_SIGNATURE = 'd0cf11e0a1b11ae1';
+var HEADER_SIG = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
 var HEADER_CLSID = '00000000000000000000000000000000';
 var consts = {
 	/* 2.1 Compund File Sector Numbers and Types */

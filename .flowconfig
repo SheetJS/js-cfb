@@ -1,6 +1,8 @@
 [ignore]
 .*/node_modules/.*
 .*/dist/.*
+.*/test_files/.*
+.*/test_files_pres/.*
 .*/test.js
 
 .*/bits/.*
@@ -11,7 +13,6 @@
 .*/demo/browser.js
 .*/shim.js
 
-.*/odsbits/.*
 .*/xlscfb.js
 .*/cfb.js
 .*/jszip.js

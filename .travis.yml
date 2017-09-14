@@ -13,7 +13,7 @@ before_install:
   - "npm install -g npm@4.3.0"
   - "npm install -g mocha@2.x voc"
   - "npm install blanket"
-  - "npm install xlsjs"
+  - "npm install xlsjs crc-32"
   - "npm install coveralls mocha-lcov-reporter"
 before_script:
   - "make init"

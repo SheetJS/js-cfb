@@ -3,13 +3,16 @@
 /* eslint-env node */
 /* vim: set ts=2 ft=javascript: */
 var X = require('../');
-var fs = require('fs'), program = require('commander');
+var fs = require('fs');
+var program = require('commander');
+var PRINTJ = require("printj");
 program
 	.version(X.version)
 	.usage('[options] <file>')
 	.option('-q, --quiet', 'process but do not report')
 	.option('-l, --list-files', 'list files')
 	.option('-d, --dump', 'dump internal representation but do not extract')
+	.option('-r, --repair', 'attempt to repair and garbage-collect archive')
 	.option('--dev', 'development mode')
 	.option('--read', 'read but do not print out contents');
 
@@ -33,26 +36,30 @@ if(program.dump) {
 	console.log(cfb.FullPathDir);
 	process.exit(0);
 }
-if(program.listFiles) {
-	var PRINTJ = require("printj"), sprintf = PRINTJ.sprintf;
+if(program.repair) {
+	X.writeFile(cfb, program.args[0]);
+	process.exit(0);
+}
 
+var sprintf = PRINTJ.sprintf;
+function fix_string(x/*:string*/)/*:string*/ { return x.replace(/[\u0000-\u001f]/, function($$) { return sprintf("\\u%04X", $$.charCodeAt(0)); }); }
+if(program.listFiles) {
 	var format_date = function(date/*:Date*/)/*:string*/ {
 		return sprintf("%02u-%02u-%02u %02u:%02u", date.getUTCMonth()+1, date.getUTCDate(), date.getUTCFullYear()%100, date.getUTCHours(), date.getUTCMinutes());
 	};
 
 	var basetime = new Date(1980,0,1);
-	var cnt = 0;
-	var rootsize = 0, filesize = 0;
+	var cnt = 0, rootsize = 0, filesize = 0;
 	console.log("  Length     Date   Time    Name");
 	console.log(" --------    ----   ----    ----");
-	cfb.FileIndex.forEach(function(file, i) {
+	cfb.FileIndex.forEach(function(file, i/*:number*/) {
 		switch(file.type) {
 			case 5:
 				basetime = file.ct || file.mt || basetime;
 				rootsize = file.size;
 				break;
 			case 2:
-				console.log(sprintf("%9lu  %s   %s", file.size, format_date(basetime), cfb.FullPaths[i]));
+				console.log(sprintf("%9lu  %s   %s", file.size, format_date(basetime), fix_string(cfb.FullPaths[i])));
 				filesize += file.size;
 				++cnt;
 		}
@@ -64,10 +71,10 @@ if(program.listFiles) {
 }
 for(var i=0; i!==cfb.FullPaths.length; ++i) {
 	if(cfb.FullPaths[i].slice(-1) === "/") {
-		console.error("mkdir " + cfb.FullPaths[i]);
+		console.error("mkdir " + fix_string(cfb.FullPaths[i]));
 		fs.mkdirSync(cfb.FullPaths[i]);
 	} else {
-		console.error("writing " + cfb.FullPaths[i]);
+		console.error("write " + fix_string(cfb.FullPaths[i]));
 		fs.writeFileSync(cfb.FullPaths[i], /*::new Buffer((*/cfb.FileIndex[i].content/*:: :any))*/);
 	}
 }

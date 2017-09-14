@@ -12,4 +12,5 @@ declare var bconcat:any;
 declare var s2a:any;
 declare var chr0:any;
 declare var chr1:any;
+declare var new_buf:any;
 */

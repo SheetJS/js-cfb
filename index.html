@@ -54,27 +54,26 @@ function fixdata(data) {
 	return o;
 }
 
+var sprintf = PRINTJ.sprintf;
+function fix_string(x/*:string*/)/*:string*/ { return x.replace(/[\u0000-\u001f]/, function($$) { return sprintf("\\u%04X", $$.charCodeAt(0)); }); }
 function get_manifest(cfb) {
 	var out = [];
-	var sprintf = PRINTJ.sprintf;
-	
 	var format_date = function(date/*:Date*/)/*:string*/ {
 		return sprintf("%02u-%02u-%02u %02u:%02u", date.getUTCMonth()+1, date.getUTCDate(), date.getUTCFullYear()%100, date.getUTCHours(), date.getUTCMinutes());
 	};
 
 	var basetime = new Date(1980,0,1);
-	var cnt = 0;
-	var rootsize = 0, filesize = 0;
+	var cnt = 0, rootsize = 0, filesize = 0;
 	out.push("  Length     Date   Time    Name");
 	out.push(" --------    ----   ----    ----");
-	cfb.FileIndex.forEach(function(file, i) {
+	cfb.FileIndex.forEach(function(file, i/*:number*/) {
 		switch(file.type) {
 			case 5:
 				basetime = file.ct || file.mt || basetime;
 				rootsize = file.size;
 				break;
 			case 2:
-				out.push(sprintf("%9lu  %s   %s", file.size, format_date(basetime), cfb.FullPaths[i]));
+				out.push(sprintf("%9lu  %s   %s", file.size, format_date(basetime), fix_string(cfb.FullPaths[i])));
 				filesize += file.size;
 				++cnt;
 		}
@@ -82,12 +81,12 @@ function get_manifest(cfb) {
 	out.push(" --------                   -------");
 	out.push(sprintf("%9lu                   %lu file%s", rootsize || filesize, cnt, (cnt !== 1 ? "s" : "")));
 
-	return out.join("\n");	
+	return out.join("\n");
 }
 
 function process_data(cfb) {
 	var output = get_manifest(cfb);
-	if(out.innerText === undefined) out.textContent = output
+	if(out.innerText === undefined) out.textContent = output;
 	else out.innerText = output;
 }
 
@@ -100,16 +99,9 @@ function handleDrop(e) {
 	var f = files[0];
 	{
 		var reader = new FileReader();
-		//var name = f.name;
 		reader.onload = function(e) {
 			var data = e.target.result;
-			var cfb;
-			if(rABS) {
-				cfb = CFB.read(data, {type: 'binary'});
-			} else {
-				var arr = fixdata(data);
-				cfb = CFB.read(btoa(arr), {type: 'base64'});
-			}
+			var cfb = CFB.read(rABS ? data : btoa(fixdata(data)), {type: rABS ? 'binary' : 'base64'});
 			process_data(cfb);
 		};
 		if(rABS) reader.readAsBinaryString(f);

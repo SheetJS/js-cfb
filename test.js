@@ -2,6 +2,7 @@
 var CFB;
 var fs = require('fs');
 describe('source', function() { it('should load', function() { CFB = require('./'); }); });
+if(typeof CRC32 === 'undefined') CRC32 = require('crc-32');
 
 var ex = [".xls",".doc",".ppt"];
 if(process.env.FMTS) ex=process.env.FMTS.split(":").map(function(x){return x[0]==="."?x:"."+x;});
@@ -16,39 +17,81 @@ var f2013 = fs.readdirSync('test_files/2013').filter(ffunc);
 var fpres = fs.readdirSync('test_files_pres').filter(ffunc);
 
 var dir = "./test_files/";
+var TYPE = "buffer";
+
+var names = [
+	["!DocumentSummaryInformation", "\u0005"],
+	["!SummaryInformation", "\u0005"],
+	["!CompObj", "\u0001"],
+	["!DataSpaces", "\u0006"],
+	["!DRMContent", "\u0009"],
+	["!DRMViewerContent", "\u0009"],
+	["!Ole", "\u0001"]
+].map(function(x) { return [x[0], x[0].replace("!", x[1])]; });
 
 function parsetest(x, cfb) {
 	describe(x + ' should have basic parts', function() {
-		/* cfb.find interface */
-		it('should find relative path using cfb#find', function() {
-			switch(x.substr(-4)) {
-				case '.xls': if(!cfb.find('Workbook') && !cfb.find('Book')) throw new Error("Cannot find workbook for " + x); break;
-				case '.ppt': if(!cfb.find('PowerPoint Document')) throw new Error("Cannot find presentation for " + x); break;
-				case '.doc': if(!cfb.find('WordDocument') && !cfb.find('Word Document')) throw new Error("Cannot find doc for " + x); break;
-			}
-		});
-		it('should find absolute path using cfb#find', function() {
-			switch(x.substr(-4)) {
-				case '.xls': if(!cfb.find('/Workbook') && !cfb.find('/Book')) throw new Error("Cannot find workbook for " + x); break;
-				case '.ppt': if(!cfb.find('/PowerPoint Document')) throw new Error("Cannot find presentation for " + x); break;
-				case '.doc': if(!cfb.find('/WordDocument') && !cfb.find('/Word Document')) throw new Error("Cannot find doc for " + x); break;
-			}
-		});
-
-		/* CFB.find function */
-		it('should find relative path using CFB.find', function() {
+		it('should find relative path', function() {
 			switch(x.substr(-4)) {
 				case '.xls': if(!CFB.find(cfb, 'Workbook') && !CFB.find(cfb, 'Book')) throw new Error("Cannot find workbook for " + x); break;
 				case '.ppt': if(!CFB.find(cfb, 'PowerPoint Document')) throw new Error("Cannot find presentation for " + x); break;
 				case '.doc': if(!CFB.find(cfb, 'WordDocument') && !CFB.find(cfb, 'Word Document')) throw new Error("Cannot find doc for " + x); break;
 			}
 		});
-		it('should find absolute path using CFB.find', function() {
+		it('should find absolute path', function() {
 			switch(x.substr(-4)) {
 				case '.xls': if(!CFB.find(cfb, '/Workbook') && !CFB.find(cfb, '/Book')) throw new Error("Cannot find workbook for " + x); break;
 				case '.ppt': if(!CFB.find(cfb, '/PowerPoint Document')) throw new Error("Cannot find presentation for " + x); break;
 				case '.doc': if(!CFB.find(cfb, '/WordDocument') && !CFB.find(cfb, '/Word Document')) throw new Error("Cannot find doc for " + x); break;
 			}
+		});
+		it('should handle "!" aliases', function() {
+			names.forEach(function(n) { if(CFB.find(cfb,n[0]) != CFB.find(cfb,n[1])) throw new Error("Bad name: " + n.join(" != ")); });
+		});
+	});
+	describe(x + ' should roundtrip', function() {
+		var data, newcfb;
+		it('should roundtrip safely', function() {
+			data = CFB.write(cfb, {type:TYPE});
+			newcfb = CFB.read(data, {type:TYPE});
+		});
+		it('should preserve content', function() {
+			var _old, _new;
+			switch(x.substr(-4)) {
+				case '.xls':
+					_old = CFB.find(cfb, '/Workbook') || CFB.find(cfb, '/Book');
+					_new = CFB.find(newcfb, '/Workbook') || CFB.find(newcfb, '/Book');
+					break;
+				case '.ppt':
+					_old = CFB.find(cfb, '/PowerPoint Document');
+					_new = CFB.find(newcfb, '/PowerPoint Document');
+					break;
+				case '.doc':
+					_old = CFB.find(cfb, '/WordDocument') || CFB.find(cfb, '/Word Document');
+					_new = CFB.find(newcfb, '/WordDocument') || CFB.find(newcfb, '/Word Document');
+					break;
+			}
+			if(CRC32.buf(_old.content) != CRC32.buf(_new.content)) throw new Error(x + " failed roundtrip test");
+		});
+		it('should be idempotent', function() {
+			var dat2 = CFB.write(newcfb, {type:TYPE});
+			var newcfb2 = CFB.read(dat2, {type:TYPE});
+			var _old, _new;
+			switch(x.substr(-4)) {
+				case '.xls':
+					_old = CFB.find(newcfb2, '/Workbook') || CFB.find(newcfb2, '/Book');
+					_new = CFB.find(newcfb, '/Workbook') || CFB.find(newcfb, '/Book');
+					break;
+				case '.ppt':
+					_old = CFB.find(newcfb2, '/PowerPoint Document');
+					_new = CFB.find(newcfb, '/PowerPoint Document');
+					break;
+				case '.doc':
+					_old = CFB.find(newcfb2, '/WordDocument') || CFB.find(newcfb2, '/Word Document');
+					_new = CFB.find(newcfb, '/WordDocument') || CFB.find(newcfb, '/Word Document');
+					break;
+			}
+			if(CRC32.buf(_old.content) != CRC32.buf(_new.content)) throw new Error(x + " failed idempotent test");
 		});
 	});
 }

@@ -1,11 +1,11 @@
 function parse(file/*:RawBytes*/, options/*:CFBReadOpts*/)/*:CFBContainer*/ {
-var mver = 3; // major version
-var ssz = 512; // sector size
+var mver = 3;
+var ssz = 512;
 var nmfs = 0; // number of mini FAT sectors
-var ndfs = 0; // number of DIFAT sectors
-var dir_start = 0; // first directory sector location
-var minifat_start = 0; // first mini FAT sector location
-var difat_start = 0; // first mini FAT sector location
+var difat_sec_cnt = 0;
+var dir_start = 0;
+var minifat_start = 0;
+var difat_start = 0;
 
 var fat_addrs/*:Array<number>*/ = []; // locations of FAT sectors
 
@@ -29,11 +29,10 @@ var header/*:RawBytes*/ = file.slice(0,ssz);
 check_shifts(blob, mver);
 
 // Number of Directory Sectors
-var nds/*:number*/ = blob.read_shift(4, 'i');
-if(mver === 3 && nds !== 0) throw new Error('# Directory Sectors: Expected 0 saw ' + nds);
+var dir_cnt/*:number*/ = blob.read_shift(4, 'i');
+if(mver === 3 && dir_cnt !== 0) throw new Error('# Directory Sectors: Expected 0 saw ' + dir_cnt);
 
 // Number of FAT Sectors
-//var nfs = blob.read_shift(4, 'i');
 blob.l += 4;
 
 // First Directory Sector Location
@@ -55,7 +54,7 @@ nmfs = blob.read_shift(4, 'i');
 difat_start = blob.read_shift(4, 'i');
 
 // Number of DIFAT Sectors
-ndfs = blob.read_shift(4, 'i');
+difat_sec_cnt = blob.read_shift(4, 'i');
 
 // Grab FAT Sector Locations
 for(var q = -1, j = 0; j < 109; ++j) { /* 109 = (512 - blob.l)>>>2; */
@@ -67,7 +66,7 @@ for(var q = -1, j = 0; j < 109; ++j) { /* 109 = (512 - blob.l)>>>2; */
 /** Break the file up into sectors */
 var sectors/*:Array<RawBytes>*/ = sectorify(file, ssz);
 
-sleuth_fat(difat_start, ndfs, sectors, ssz, fat_addrs);
+sleuth_fat(difat_start, difat_sec_cnt, sectors, ssz, fat_addrs);
 
 /** Chains */
 var sector_list/*:SectorList*/ = make_sector_list(sectors, dir_start, fat_addrs, ssz);
@@ -83,18 +82,16 @@ var files/*:CFBFiles*/ = {}, Paths/*:Array<string>*/ = [], FileIndex/*:CFBFileIn
 read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, FileIndex);
 
 build_full_paths(FileIndex, FullPathDir, FullPaths, Paths);
+Paths.shift();
 
-var root_name/*:string*/ = Paths.shift();
-
-/* [MS-CFB] 2.6.4 (Unicode 3.0.1 case conversion) */
-var find_path = make_find_path(FullPaths, Paths, FileIndex, files, root_name);
-
-return {
-	raw: {header: header, sectors: sectors},
+var o = {
 	FileIndex: FileIndex,
 	FullPaths: FullPaths,
-	FullPathDir: FullPathDir,
-	find: find_path
+	FullPathDir: FullPathDir
 };
+
+// $FlowIgnore
+if(options && options.raw) o.raw = {header: header, sectors: sectors};
+return o;
 } // parse
 

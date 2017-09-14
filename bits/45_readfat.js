@@ -1,5 +1,5 @@
 /** Chase down the rest of the DIFAT chain to build a comprehensive list
-    DIFAT chains by storing the next sector number as the last 32 bytes */
+    DIFAT chains by storing the next sector number as the last 32 bits */
 function sleuth_fat(idx/*:number*/, cnt/*:number*/, sectors/*:Array<RawBytes>*/, ssz/*:number*/, fat_addrs)/*:void*/ {
 	var q/*:number*/ = ENDOFCHAIN;
 	if(idx === ENDOFCHAIN) {
@@ -17,7 +17,6 @@ function sleuth_fat(idx/*:number*/, cnt/*:number*/, sectors/*:Array<RawBytes>*/,
 
 /** Follow the linked list of sectors for a given starting point */
 function get_sector_list(sectors/*:Array<RawBytes>*/, start/*:number*/, fat_addrs/*:Array<number>*/, ssz/*:number*/, chkd/*:?Array<boolean>*/)/*:SectorEntry*/ {
-	var sl = sectors.length;
 	var buf/*:Array<number>*/ = [], buf_chain/*:Array<any>*/ = [];
 	if(!chkd) chkd = [];
 	var modulus = ssz - 1, j = 0, jj = 0;

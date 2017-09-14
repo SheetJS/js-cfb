@@ -4,6 +4,8 @@ type CFBModule = {
 	version:string;
 	find:(cfb:CFBContainer, path:string)=>?CFBEntry;
 	read:(blob:RawBytes|string, opts:CFBReadOpts)=>CFBContainer;
+	write:(cfb:CFBContainer, opts:CFBWriteOpts)=>RawBytes|string;
+	writeFile:(cfb:CFBContainer, filename:string, opts:CFBWriteOpts)=>void;
 	parse:(file:RawBytes, opts:CFBReadOpts)=>CFBContainer;
 	utils:CFBUtils;
 };
@@ -21,22 +23,31 @@ type ReadShiftFunc = {
 };
 type CheckFieldFunc = {(hexstr:string, fld:string):void;};
 
+type WriteShiftFunc = {
+	//(size:number, val:string|number, f:?string):any;
+	(size:1|2|4|-4, val:number):any;
+	(size:number, val:string, f:"hex"|"utf16le"):any;
+}
+
 type RawBytes = Array<number> | Buffer | Uint8Array;
 
 class CFBlobArray extends Array<number> {
 	l:number;
+	write_shift:WriteShiftFunc;
 	read_shift:ReadShiftFunc;
 	chk:CheckFieldFunc;
 };
 interface CFBlobBuffer extends Buffer {
 	l:number;
-	slice:(start:number, end:?number)=>Buffer;
+	slice:(start?:number, end:?number)=>Buffer;
+	write_shift:WriteShiftFunc;
 	read_shift:ReadShiftFunc;
 	chk:CheckFieldFunc;
 };
 interface CFBlobUint8 extends Uint8Array {
 	l:number;
-	slice:(start:number, end:?number)=>Uint8Array;
+	slice:(start?:number, end:?number)=>Uint8Array;
+	write_shift:WriteShiftFunc;
 	read_shift:ReadShiftFunc;
 	chk:CheckFieldFunc;
 };
@@ -45,12 +56,15 @@ interface CFBlobber {
 	[n:number]:number;
 	l:number;
 	length:number;
-	slice:(start:number, end:?number)=>RawBytes;
+	slice:(start:?number, end:?number)=>RawBytes;
+	write_shift:WriteShiftFunc;
 	read_shift:ReadShiftFunc;
 	chk:CheckFieldFunc;
 };
 
 type CFBlob = CFBlobArray | CFBlobBuffer | CFBlobUint8;
+
+type CFBWriteOpts = any;
 
 interface CFBReadOpts {
 	type:?string;
@@ -61,14 +75,13 @@ type CFBFileIndex = Array<CFBEntry>;
 type CFBFindPath = (n:string)=>?CFBEntry;
 
 type CFBContainer = {
-	raw:{
+	raw?:{
 		header:any;
 		sectors:Array<any>;
 	};
 	FileIndex:CFBFileIndex;
-	FullPathDir:CFBDirectory;
+	FullPathDir:CFBFullPathDir;
 	FullPaths:Array<string>;
-	find:CFBFindPath;
 }
 
 type CFBEntry = {

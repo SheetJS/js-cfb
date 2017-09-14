@@ -13,6 +13,12 @@ export function read(f: CFB$Blob | string, options?: CFBParsingOptions): CFBCont
 /** Find a file entry given a path or file name */
 export function find(cfb: CFBContainer, path: string): CFBEntry | null;
 
+/** Generate a container file */
+export function write(cfb: CFBContainer, options?: any): any;
+
+/** Write a container file to the filesystem */
+export function writeFile(cfb: CFBContainer, filename: string, options?: any): any;
+
 /** Utility functions */
 export const utils: CFB$Utils;
 
@@ -23,6 +29,8 @@ export interface CFBParsingOptions {
   type?: 'base64' | 'binary' | 'buffer' | 'file' | 'array';
   /** If true, throw errors when features are not understood */
   WTF?: boolean;
+  /** If true, include raw data in output */
+  raw?: boolean;
 }
 
 export type CFB$Blob = Buffer | number[] | Uint8Array;
@@ -76,9 +84,6 @@ export interface CFBDirectory {
 
 /* File object */
 export interface CFBContainer {
-  /* search by path or file name */
-  find(name: string): CFBEntry;
-
   /* list of streams and storages */
   FullPaths: string[];
 
@@ -89,7 +94,7 @@ export interface CFBContainer {
   FileIndex: CFBEntry[];
 
   /* Raw Content, in chunks (Buffer when available, Array of bytes otherwise) */
-  raw: {
+  raw?: {
     header: CFB$Blob,
     sectors: CFB$Blob[];
   };
@@ -97,6 +102,11 @@ export interface CFBContainer {
 
 /** General utilities */
 export interface CFB$Utils {
+  cfb_new(opts?: any): CFBContainer;
+  cfb_add(cfb: CFBContainer, name: string, content: any, opts?: any): CFBEntry;
+  cfb_del(cfb: CFBContainer, name: string): boolean;
+  cfb_mov(cfb: CFBContainer, old_name: string, new_name: string): boolean;
+  cfb_gc(cfb: CFBContainer): void;
   ReadShift(size: number, t?: string): number|string;
   WarnField(hexstr: string, fld?: string): void;
   CheckField(hexstr: string, fld?: string): void;
