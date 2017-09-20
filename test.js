@@ -75,23 +75,7 @@ function parsetest(x, cfb) {
 		});
 		it('should be idempotent', function() {
 			var dat2 = CFB.write(newcfb, {type:TYPE});
-			var newcfb2 = CFB.read(dat2, {type:TYPE});
-			var _old, _new;
-			switch(x.substr(-4)) {
-				case '.xls':
-					_old = CFB.find(newcfb2, '/Workbook') || CFB.find(newcfb2, '/Book');
-					_new = CFB.find(newcfb, '/Workbook') || CFB.find(newcfb, '/Book');
-					break;
-				case '.ppt':
-					_old = CFB.find(newcfb2, '/PowerPoint Document');
-					_new = CFB.find(newcfb, '/PowerPoint Document');
-					break;
-				case '.doc':
-					_old = CFB.find(newcfb2, '/WordDocument') || CFB.find(newcfb2, '/Word Document');
-					_new = CFB.find(newcfb, '/WordDocument') || CFB.find(newcfb, '/Word Document');
-					break;
-			}
-			if(CRC32.buf(_old.content) != CRC32.buf(_new.content)) throw new Error(x + " failed idempotent test");
+			if(CRC32.buf(data) != CRC32.buf(dat2)) throw new Error(x + " failed idempotent test");
 		});
 	});
 }

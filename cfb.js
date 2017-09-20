@@ -161,7 +161,7 @@ function new_buf(sz) {
 /* [MS-CFB] v20130118 */
 var CFB = (function _CFB(){
 var exports = {};
-exports.version = '0.13.0';
+exports.version = '0.13.1';
 /* [MS-CFB] 2.6.4 */
 function namecmp(l, r) {
 	var L = l.split("/"), R = r.split("/");
@@ -534,7 +534,7 @@ function rebuild_cfb(cfb, f) {
 	}
 	if(!gc && !f) return;
 
-	var now = new Date(), j = 0;
+	var now = new Date(1987, 1, 19), j = 0;
 	var data = [];
 	for(i = 0; i < cfb.FullPaths.length; ++i) {
 		if(cfb.FileIndex[i].type === 0) continue;
@@ -707,7 +707,7 @@ if(file.size > 0 && file.size < 0x1000) {
 			for(; j & 0x3F; ++j) o.write_shift(1, 0);
 		}
 	}
-
+	while(o.l < o.length) o.write_shift(1, 0);
 	return o;
 }
 /* [MS-CFB] 2.6.4 (Unicode 3.0.1 case conversion) */
@@ -785,9 +785,15 @@ function cfb_add(cfb, name, content, opts) {
 	init_cfb(cfb);
 	var file = CFB.find(cfb, name);
 	if(!file) {
+		var fpath = cfb.FullPaths[0];
+		if(name.slice(0, fpath.length) == fpath) fpath = name;
+		else {
+			if(fpath.slice(-1) != "/") fpath += "/";
+			fpath = (fpath + name).replace("//","/");
+		}
 		file = ({name: filename(name)});
 		cfb.FileIndex.push(file);
-		cfb.FullPaths.push(name);
+		cfb.FullPaths.push(fpath);
 		CFB.utils.cfb_gc(cfb);
 	}
 file.content = (content);

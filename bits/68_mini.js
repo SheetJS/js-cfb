@@ -6,4 +6,4 @@
 			for(; j & 0x3F; ++j) o.write_shift(1, 0);
 		}
 	}
-
+	while(o.l < o.length) o.write_shift(1, 0);

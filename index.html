@@ -31,73 +31,75 @@ a { text-decoration: none }
 
 <b>Advanced Demo Options:</b>
 Use readAsBinaryString: (when available) <input type="checkbox" name="userabs" checked>
+
+<a id="saveit" onclick="savefile();" href="#">Export loaded data</a>
 </pre>
 <pre id="out"></pre>
 <br />
 <script src="https://unpkg.com/printj@1.1.0/dist/printj.min.js"></script>
 <script src="cfb.js"></script>
+<script src="//rawgit.com/eligrey/Blob.js/master/Blob.js"></script>
+<script src="//rawgit.com/eligrey/FileSaver.js/master/FileSaver.js"></script>
 <script>
 /*jshint browser:true */
 /* eslint-env browser */
 /* eslint no-use-before-define:0 */
 /*global CFB, out */
-var rABS = typeof FileReader !== "undefined" && typeof FileReader.prototype !== "undefined" && typeof FileReader.prototype.readAsBinaryString !== "undefined";
-if(!rABS) {
-	document.getElementsByName("userabs")[0].disabled = true;
-	document.getElementsByName("userabs")[0].checked = false;
-}
+var global_cfb;
 
-function fixdata(data) {
-	var o = "", l = 0, w = 10240;
-	for(; l<data.byteLength/w; ++l) o+=String.fromCharCode.apply(null,new Uint8Array(data.slice(l*w,l*w+w)));
-	o+=String.fromCharCode.apply(null, new Uint8Array(data.slice(l*w)));
-	return o;
-}
-
-var sprintf = PRINTJ.sprintf;
-function fix_string(x/*:string*/)/*:string*/ { return x.replace(/[\u0000-\u001f]/, function($$) { return sprintf("\\u%04X", $$.charCodeAt(0)); }); }
-function get_manifest(cfb) {
-	var out = [];
+var get_manifest = (function() {
+	var sprintf = PRINTJ.sprintf;
+	function fix_string(x/*:string*/)/*:string*/ { return x.replace(/[\u0000-\u001f]/, function($$) { return sprintf("\\u%04X", $$.charCodeAt(0)); }); }
 	var format_date = function(date/*:Date*/)/*:string*/ {
 		return sprintf("%02u-%02u-%02u %02u:%02u", date.getUTCMonth()+1, date.getUTCDate(), date.getUTCFullYear()%100, date.getUTCHours(), date.getUTCMinutes());
 	};
+	return function get_manifest(cfb) {
+		var out = [];
 
-	var basetime = new Date(1980,0,1);
-	var cnt = 0, rootsize = 0, filesize = 0;
-	out.push("  Length     Date   Time    Name");
-	out.push(" --------    ----   ----    ----");
-	cfb.FileIndex.forEach(function(file, i/*:number*/) {
-		switch(file.type) {
-			case 5:
-				basetime = file.ct || file.mt || basetime;
-				rootsize = file.size;
-				break;
-			case 2:
-				out.push(sprintf("%9lu  %s   %s", file.size, format_date(basetime), fix_string(cfb.FullPaths[i])));
-				filesize += file.size;
-				++cnt;
-		}
-	});
-	out.push(" --------                   -------");
-	out.push(sprintf("%9lu                   %lu file%s", rootsize || filesize, cnt, (cnt !== 1 ? "s" : "")));
-
-	return out.join("\n");
-}
+		var basetime = new Date(1980,0,1);
+		var cnt = 0, rootsize = 0, filesize = 0;
+		out.push("  Length     Date   Time    Name");
+		out.push(" --------    ----   ----    ----");
+		cfb.FileIndex.forEach(function(file, i/*:number*/) {
+			switch(file.type) {
+				case 5:
+					basetime = file.ct || file.mt || basetime;
+					rootsize = file.size;
+					break;
+				case 2:
+					out.push(sprintf("%9lu  %s   %s", file.size, format_date(basetime), fix_string(cfb.FullPaths[i])));
+					filesize += file.size;
+					++cnt;
+			}
+		});
+		out.push(" --------                   -------");
+		out.push(sprintf("%9lu                   %lu file%s", rootsize || filesize, cnt, (cnt !== 1 ? "s" : "")));
+		return out.join("\n");
+	};
+})();
 
 function process_data(cfb) {
+	global_cfb = cfb;
 	var output = get_manifest(cfb);
 	if(out.innerText === undefined) out.textContent = output;
 	else out.innerText = output;
 }
 
-var drop = document.getElementById('drop');
-function handleDrop(e) {
-	e.stopPropagation();
-	e.preventDefault();
-	rABS = document.getElementsByName("userabs")[0].checked;
-	var files = e.dataTransfer.files;
-	var f = files[0];
-	{
+var do_file = (function() {
+	var rABS = typeof FileReader !== "undefined" && (FileReader.prototype||{}).readAsBinaryString;
+	var domrabs = document.getElementsByName("userabs")[0];
+	if(!rABS) domrabs.disabled = !(domrabs.checked = false);
+
+	function fixdata(data) {
+		var o = "", l = 0, w = 10240;
+		for(; l<data.byteLength/w; ++l) o+=String.fromCharCode.apply(null,new Uint8Array(data.slice(l*w,l*w+w)));
+		o+=String.fromCharCode.apply(null, new Uint8Array(data.slice(l*w)));
+		return o;
+	}
+
+	return function do_file(files) {
+		rABS = domrabs.checked;
+		var f = files[0];
 		var reader = new FileReader();
 		reader.onload = function(e) {
 			var data = e.target.result;
@@ -106,22 +108,56 @@ function handleDrop(e) {
 		};
 		if(rABS) reader.readAsBinaryString(f);
 		else reader.readAsArrayBuffer(f);
+	};
+})();
+
+(function() {
+	var drop = document.getElementById('drop');
+	if(!drop.addEventListener) return;
+
+	function handleDrop(e) {
+		e.stopPropagation();
+		e.preventDefault();
+		do_file(e.dataTransfer.files);
 	}
-}
 
-function handleDragover(e) {
-	e.stopPropagation();
-	e.preventDefault();
-	e.dataTransfer.dropEffect = 'copy';
-}
+	function handleDragover(e) {
+		e.stopPropagation();
+		e.preventDefault();
+		e.dataTransfer.dropEffect = 'copy';
+	}
 
-if(drop.addEventListener) {
 	drop.addEventListener('dragenter', handleDragover, false);
 	drop.addEventListener('dragover', handleDragover, false);
 	drop.addEventListener('drop', handleDrop, false);
-}
+})();
+
+var savefile = (function() {
+	var s2ab = function s2ab(s) {
+		var buf, i=0;
+		if(typeof ArrayBuffer !== 'undefined') {
+			buf = new ArrayBuffer(s.length);
+			var view = new Uint8Array(buf);
+			for (; i!=s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF;
+			return buf;
+		} else {
+			buf = new Array(s.length);
+			for (; i!=s.length; ++i) buf[i] = s.charCodeAt(i) & 0xFF;
+			return buf;
+		}
+	};
+
+	return function savefile() {
+		if(!global_cfb) return alert("Must load a file first!");
+		console.log(global_cfb);
+		var data = CFB.write(global_cfb, {type:'binary'});
+		console.log(data);
+		saveAs(new Blob([s2ab(data)],{type:"application/octet-stream"}), "sheetjs.xls");
+	};
+})();
 </script>
 <script type="text/javascript">
+/* eslint no-use-before-define:0 */
 	var _gaq = _gaq || [];
 	_gaq.push(['_setAccount', 'UA-36810333-1']);
 	_gaq.push(['_trackPageview']);

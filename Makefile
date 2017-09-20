@@ -53,7 +53,7 @@ dist: dist-deps $(TARGET) ## Prepare JS files for distribution
 
 .PHONY: dist-deps
 dist-deps: xlscfb.js ## Copy dependencies for distribution
-	cp xlscfb.js dist/xlscfb.js
+	cp xlscfb.flow.js dist/xlscfb.js
 
 .PHONY: aux
 aux: $(AUXTARGETS)
@@ -61,7 +61,8 @@ aux: $(AUXTARGETS)
 .PHONY: xls
 xls: xlscfb.js
 
-XLSDEPS=misc/suppress_export.js $(filter-out bits/08_blob.js,$(DEPS))
+XLSSKIP=bits/08_blob.js bits/04_base64.js bits/05_buf.js
+XLSDEPS=misc/suppress_export.js $(filter-out $(XLSSKIP),$(DEPS))
 xlscfb.flow.js: $(XLSDEPS) ## Build support library
 	cat $^ | tr -d '\15\32' > $@
 

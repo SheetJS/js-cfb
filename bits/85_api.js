@@ -8,9 +8,15 @@ function cfb_add(cfb/*:CFBContainer*/, name/*:string*/, content/*:?RawBytes*/, o
 	init_cfb(cfb);
 	var file = CFB.find(cfb, name);
 	if(!file) {
+		var fpath = cfb.FullPaths[0];
+		if(name.slice(0, fpath.length) == fpath) fpath = name;
+		else {
+			if(fpath.slice(-1) != "/") fpath += "/";
+			fpath = (fpath + name).replace("//","/");
+		}
 		file = ({name: filename(name)}/*:any*/);
 		cfb.FileIndex.push(file);
-		cfb.FullPaths.push(name);
+		cfb.FullPaths.push(fpath);
 		CFB.utils.cfb_gc(cfb);
 	}
 	/*:: if(!file) throw new Error("unreachable"); */

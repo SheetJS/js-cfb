@@ -5,71 +5,10 @@ var DO_NOT_EXPORT_CFB = true;
 /*exported CFB */
 /*global module, require:false, process:false, Buffer:false, Uint8Array:false */
 
-var Base64 = (function make_b64(){
-	var map = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-	return {
-		encode: function(input) {
-			var o = "";
-			var c1, c2, c3;
-			var e1, e2, e3, e4;
-			for(var i = 0; i < input.length; ) {
-				c1 = input.charCodeAt(i++);
-				e1 = (c1 >> 2);
-
-				c2 = input.charCodeAt(i++);
-				e2 = ((c1 & 3) << 4) | (c2 >> 4);
-
-				c3 = input.charCodeAt(i++);
-				e3 = ((c2 & 15) << 2) | (c3 >> 6);
-				e4 = (c3 & 63);
-				if (isNaN(c2)) { e3 = e4 = 64; }
-				else if (isNaN(c3)) { e4 = 64; }
-				o += map.charAt(e1) + map.charAt(e2) + map.charAt(e3) + map.charAt(e4);
-			}
-			return o;
-		},
-		decode: function b64_decode(input) {
-			var o = "";
-			var c1, c2, c3;
-			var e1, e2, e3, e4;
-			input = input.replace(/[^\w\+\/\=]/g, "");
-			for(var i = 0; i < input.length;) {
-				e1 = map.indexOf(input.charAt(i++));
-				e2 = map.indexOf(input.charAt(i++));
-				c1 = (e1 << 2) | (e2 >> 4);
-				o += String.fromCharCode(c1);
-
-				e3 = map.indexOf(input.charAt(i++));
-				c2 = ((e2 & 15) << 4) | (e3 >> 2);
-				if (e3 !== 64) { o += String.fromCharCode(c2); }
-
-				e4 = map.indexOf(input.charAt(i++));
-				c3 = ((e3 & 3) << 6) | e4;
-				if (e4 !== 64) { o += String.fromCharCode(c3); }
-			}
-			return o;
-		}
-	};
-})();
-var has_buf = (typeof Buffer !== 'undefined' && typeof process !== 'undefined' && typeof process.versions !== 'undefined' && process.versions.node);
-
-function new_raw_buf(len) {
-	/* jshint -W056 */
-	// $FlowIgnore
-	return new (has_buf ? Buffer : Array)(len);
-	/* jshint +W056 */
-}
-
-var s2a = function s2a(s) {
-	if(has_buf) return new Buffer(s, "binary");
-	return s.split("").map(function(x){ return x.charCodeAt(0) & 0xff; });
-};
-
-var chr0 = /\u0000/g, chr1 = /[\u0001-\u0006]/;
 /* [MS-CFB] v20130118 */
 var CFB = (function _CFB(){
 var exports = {};
-exports.version = '0.13.0';
+exports.version = '0.13.1';
 /* [MS-CFB] 2.6.4 */
 function namecmp(l, r) {
 	var L = l.split("/"), R = r.split("/");
@@ -442,7 +381,7 @@ function rebuild_cfb(cfb, f) {
 	}
 	if(!gc && !f) return;
 
-	var now = new Date(), j = 0;
+	var now = new Date(1987, 1, 19), j = 0;
 	var data = [];
 	for(i = 0; i < cfb.FullPaths.length; ++i) {
 		if(cfb.FileIndex[i].type === 0) continue;
@@ -615,7 +554,7 @@ if(file.size > 0 && file.size < 0x1000) {
 			for(; j & 0x3F; ++j) o.write_shift(1, 0);
 		}
 	}
-
+	while(o.l < o.length) o.write_shift(1, 0);
 	return o;
 }
 /* [MS-CFB] 2.6.4 (Unicode 3.0.1 case conversion) */
@@ -693,9 +632,15 @@ function cfb_add(cfb, name, content, opts) {
 	init_cfb(cfb);
 	var file = CFB.find(cfb, name);
 	if(!file) {
+		var fpath = cfb.FullPaths[0];
+		if(name.slice(0, fpath.length) == fpath) fpath = name;
+		else {
+			if(fpath.slice(-1) != "/") fpath += "/";
+			fpath = (fpath + name).replace("//","/");
+		}
 		file = ({name: filename(name)});
 		cfb.FileIndex.push(file);
-		cfb.FullPaths.push(name);
+		cfb.FullPaths.push(fpath);
 		CFB.utils.cfb_gc(cfb);
 	}
 file.content = (content);

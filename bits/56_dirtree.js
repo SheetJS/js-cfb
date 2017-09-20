@@ -1,4 +1,4 @@
-	var now = new Date(), j = 0;
+	var now = new Date(1987, 1, 19), j = 0;
 	var data/*:Array<[string, CFBEntry]>*/ = [];
 	for(i = 0; i < cfb.FullPaths.length; ++i) {
 		if(cfb.FileIndex[i].type === 0) continue;
