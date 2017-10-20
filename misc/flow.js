@@ -67,7 +67,7 @@ type CFBlob = CFBlobArray | CFBlobBuffer | CFBlobUint8;
 type CFBWriteOpts = any;
 
 interface CFBReadOpts {
-	type:?string;
+	type?:string;
 };
 
 type CFBFileIndex = Array<CFBEntry>;

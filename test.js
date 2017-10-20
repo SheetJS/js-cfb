@@ -1,8 +1,18 @@
+/* cfb.js (C) 2013-present SheetJS -- http://sheetjs.com */
 /* vim: set ts=2: */
+/*jshint mocha:true */
+/*global process, require */
+/*::
+declare type EmptyFunc = (() => void) | null;
+declare type DescribeIt = { (desc:string, test:EmptyFunc):void; skip(desc:string, test:EmptyFunc):void; };
+declare var describe : DescribeIt;
+declare var it: DescribeIt;
+declare var before:(test:EmptyFunc)=>void;
+*/
 var CFB;
 var fs = require('fs');
 describe('source', function() { it('should load', function() { CFB = require('./'); }); });
-if(typeof CRC32 === 'undefined') CRC32 = require('crc-32');
+var CRC32 = require('crc-32');
 
 var ex = [".xls",".doc",".ppt"];
 if(process.env.FMTS) ex=process.env.FMTS.split(":").map(function(x){return x[0]==="."?x:"."+x;});
@@ -71,6 +81,7 @@ function parsetest(x, cfb) {
 					_new = CFB.find(newcfb, '/WordDocument') || CFB.find(newcfb, '/Word Document');
 					break;
 			}
+			/*:: if(!_old || !_new) throw "unreachable"; */
 			if(CRC32.buf(_old.content) != CRC32.buf(_new.content)) throw new Error(x + " failed roundtrip test");
 		});
 		it('should be idempotent', function() {
@@ -107,7 +118,7 @@ describe('should parse test files', function() {
 	});
 });
 
-var cp = 'custom_properties.xls'
+var cp = 'custom_properties.xls';
 
 describe('input formats', function() {
 	it('should read binary strings', function() {

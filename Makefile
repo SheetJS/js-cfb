@@ -66,6 +66,11 @@ XLSDEPS=misc/suppress_export.js $(filter-out $(XLSSKIP),$(DEPS))
 xlscfb.flow.js: $(XLSDEPS) ## Build support library
 	cat $^ | tr -d '\15\32' > $@
 
+BYTEFILE=dist/cfb.min.js dist/xlscfb.js
+.PHONY: bytes
+bytes: ## Display minified and gzipped file sizes
+	for i in $(BYTEFILE); do printj "%-30s %7d %10d" $$i $$(wc -c < $$i) $$(gzip --best --stdout $$i | wc -c); done
+
 
 ## Testing
 
@@ -74,6 +79,7 @@ test mocha: test.js $(TARGET) ## Run test suite
 	mocha -R spec -t 20000
 
 #*                      To run tests for one format, make test_<fmt>
+#*                      To run the core test suite, make test_misc
 TESTFMT=$(patsubst %,test_%,$(FMT))
 .PHONY: $(TESTFMT)
 $(TESTFMT): test_%:
@@ -81,6 +87,9 @@ $(TESTFMT): test_%:
 
 
 ## Code Checking
+
+.PHONY: fullint
+fullint: lint old-lint tslint flow mdlint ## Run all checks
 
 .PHONY: lint
 lint: $(TARGET) $(AUXTARGETS) ## Run eslint checks
@@ -91,9 +100,9 @@ lint: $(TARGET) $(AUXTARGETS) ## Run eslint checks
 old-lint: $(TARGET) $(AUXTARGETS) ## Run jshint and jscs checks
 	@jshint --show-non-errors $(TARGET) $(AUXTARGETS)
 	@jshint --show-non-errors $(CMDS)
-	@jshint --show-non-errors package.json
+	@jshint --show-non-errors package.json test.js
 	@jshint --show-non-errors --extract=always $(HTMLLINT)
-	@jscs $(TARGET) $(AUXTARGETS)
+	@jscs $(TARGET) $(AUXTARGETS) test.js
 	if [ -e $(CLOSURE) ]; then java -jar $(CLOSURE) $(REQS) $(FLOWTARGET) --jscomp_warning=reportUnknownTypes >/dev/null; fi
 
 .PHONY: tslint
@@ -115,6 +124,11 @@ misc/coverage.html: $(TARGET) test.js
 coveralls: ## Coverage Test + Send to coveralls.io
 	mocha --require blanket --reporter mocha-lcov-reporter -t 20000 | node ./node_modules/coveralls/bin/coveralls.js
 
+MDLINT=README.md
+.PHONY: mdlint
+mdlint: $(MDLINT) ## Check markdown documents
+	alex $^
+	mdspell -a -n -x -r --en-us $^
 
 .PHONY: help
 help:

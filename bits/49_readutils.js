@@ -1,6 +1,5 @@
-var fs/*:: = require('fs'); */;
 function read_file(filename/*:string*/, options/*:CFBReadOpts*/) {
-	if(fs == null) fs = require('fs');
+	get_fs();
 	return parse(fs.readFileSync(filename), options);
 }
 

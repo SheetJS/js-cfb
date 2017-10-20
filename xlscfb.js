@@ -8,7 +8,7 @@ var DO_NOT_EXPORT_CFB = true;
 /* [MS-CFB] v20130118 */
 var CFB = (function _CFB(){
 var exports = {};
-exports.version = '0.13.1';
+exports.version = '0.13.2';
 /* [MS-CFB] 2.6.4 */
 function namecmp(l, r) {
 	var L = l.split("/"), R = r.split("/");
@@ -29,6 +29,8 @@ function filename(p) {
 	var c = p.lastIndexOf("/");
 	return (c === -1) ? p : p.slice(c+1);
 }
+var fs;
+function get_fs() { return fs || (fs = require('fs')); }
 function parse(file, options) {
 var mver = 3;
 var ssz = 512;
@@ -326,9 +328,8 @@ function read_date(blob, offset) {
 	return new Date(( ( (__readUInt32LE(blob,offset+4)/1e7)*Math.pow(2,32)+__readUInt32LE(blob,offset)/1e7 ) - 11644473600)*1000);
 }
 
-var fs;
 function read_file(filename, options) {
-	if(fs == null) fs = require('fs');
+	get_fs();
 	return parse(fs.readFileSync(filename), options);
 }
 
@@ -603,6 +604,7 @@ var consts = {
 };
 
 function write_file(cfb, filename, options) {
+	get_fs();
 	var o = _write(cfb, options);
 fs.writeFileSync(filename, o);
 }
@@ -616,7 +618,7 @@ function a2s(o) {
 function write(cfb, options) {
 	var o = _write(cfb, options);
 	switch(options && options.type) {
-		case "file": fs.writeFileSync(options.filename, (o)); return o;
+		case "file": get_fs(); fs.writeFileSync(options.filename, (o)); return o;
 		case "binary": return a2s(o);
 		case "base64": return Base64.encode(a2s(o));
 	}
@@ -638,7 +640,7 @@ function cfb_add(cfb, name, content, opts) {
 			if(fpath.slice(-1) != "/") fpath += "/";
 			fpath = (fpath + name).replace("//","/");
 		}
-		file = ({name: filename(name)});
+		file = ({name: filename(name), type: 2});
 		cfb.FileIndex.push(file);
 		cfb.FullPaths.push(fpath);
 		CFB.utils.cfb_gc(cfb);

@@ -3,7 +3,6 @@
 .*/dist/.*
 .*/test_files/.*
 .*/test_files_pres/.*
-.*/test.js
 
 .*/bits/.*
 .*/ctest/.*
@@ -23,6 +22,7 @@
 cfb.flow.js
 xlscfb.flow.js
 .*/bin/.*.njs
+test.js
 
 [libs]
 bits/10_types.js

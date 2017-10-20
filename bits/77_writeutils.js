@@ -1,4 +1,5 @@
 function write_file(cfb/*:CFBContainer*/, filename/*:string*/, options/*:CFBWriteOpts*/)/*:void*/ {
+	get_fs();
 	var o = _write(cfb, options);
 	/*:: if(typeof Buffer == 'undefined' || !Buffer.isBuffer(o) || !(o instanceof Buffer)) throw new Error("unreachable"); */
 	fs.writeFileSync(filename, o);
@@ -13,7 +14,7 @@ function a2s(o/*:RawBytes*/)/*:string*/ {
 function write(cfb/*:CFBContainer*/, options/*:CFBWriteOpts*/)/*:RawBytes|string*/ {
 	var o = _write(cfb, options);
 	switch(options && options.type) {
-		case "file": fs.writeFileSync(options.filename, (o/*:any*/)); return o;
+		case "file": get_fs(); fs.writeFileSync(options.filename, (o/*:any*/)); return o;
 		case "binary": return a2s(o);
 		case "base64": return Base64.encode(a2s(o));
 	}
