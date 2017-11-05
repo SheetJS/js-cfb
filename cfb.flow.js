@@ -179,7 +179,7 @@ type CFBFiles = {[n:string]:CFBEntry};
 /* [MS-CFB] v20130118 */
 var CFB = (function _CFB(){
 var exports/*:CFBModule*/ = /*::(*/{}/*:: :any)*/;
-exports.version = '0.14.0';
+exports.version = '1.0.0';
 /* [MS-CFB] 2.6.4 */
 function namecmp(l/*:string*/, r/*:string*/)/*:number*/ {
 	var L = l.split("/"), R = r.split("/");
@@ -283,7 +283,7 @@ sector_list.ssz = ssz;
 
 /* [MS-CFB] 2.6.1 Compound File Directory Entry */
 var files/*:CFBFiles*/ = {}, Paths/*:Array<string>*/ = [], FileIndex/*:CFBFileIndex*/ = [], FullPaths/*:Array<string>*/ = [];
-read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, FileIndex);
+read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, FileIndex, minifat_start);
 
 build_full_paths(FileIndex, FullPaths, Paths);
 Paths.shift();
@@ -381,6 +381,20 @@ function build_full_paths(FI/*:CFBFileIndex*/, FP/*:Array<string>*/, Paths/*:Arr
 	}
 }
 
+function get_mfat_entry(entry/*:CFBEntry*/, payload/*:RawBytes*/, mini/*:?RawBytes*/)/*:CFBlob*/ {
+	var start = entry.start, size = entry.size;
+	//return (payload.slice(start*MSSZ, start*MSSZ + size)/*:any*/);
+	var o = [];
+	var idx = start;
+	while(mini && size > 0 && idx >= 0) {
+		o.push(payload.slice(idx * MSSZ, idx * MSSZ + MSSZ));
+		size -= MSSZ;
+		idx = __readInt32LE(mini, idx * 4);
+	}
+	if(o.length === 0) return (new_buf(0)/*:any*/);
+	return (bconcat(o).slice(0, entry.size)/*:any*/);
+}
+
 /** Chase down the rest of the DIFAT chain to build a comprehensive list
     DIFAT chains by storing the next sector number as the last 32 bits */
 function sleuth_fat(idx/*:number*/, cnt/*:number*/, sectors/*:Array<RawBytes>*/, ssz/*:number*/, fat_addrs)/*:void*/ {
@@ -442,7 +456,7 @@ function make_sector_list(sectors/*:Array<RawBytes>*/, dir_start/*:number*/, fat
 }
 
 /* [MS-CFB] 2.6.1 Compound File Directory Entry */
-function read_directory(dir_start/*:number*/, sector_list/*:SectorList*/, sectors/*:Array<RawBytes>*/, Paths/*:Array<string>*/, nmfs, files, FileIndex) {
+function read_directory(dir_start/*:number*/, sector_list/*:SectorList*/, sectors/*:Array<RawBytes>*/, Paths/*:Array<string>*/, nmfs, files, FileIndex, mini) {
 	var minifat_store = 0, pl = (Paths.length?2:0);
 	var sector = sector_list[dir_start].data;
 	var i = 0, namelen = 0, name;
@@ -484,7 +498,7 @@ function read_directory(dir_start/*:number*/, sector_list/*:SectorList*/, sector
 		} else {
 			o.storage = 'minifat';
 			if(minifat_store !== ENDOFCHAIN && o.start !== ENDOFCHAIN && sector_list[minifat_store]) {
-				o.content = (sector_list[minifat_store].data.slice(o.start*MSSZ,o.start*MSSZ+o.size)/*:any*/);
+				o.content = get_mfat_entry(o, sector_list[minifat_store].data, (sector_list[mini]||{}).data);
 				prep_blob(o.content, 0);
 			}
 		}
