@@ -74,21 +74,10 @@ export interface CFBEntry {
   storage?: string;
 }
 
-
-/* cfb.FullPathDir Directory object */
-export interface CFBDirectory {
-  /* cfb.FullPathDir keys are paths; cfb.Directory keys are file names */
-  [key: string]: CFBEntry;
-}
-
-
 /* File object */
 export interface CFBContainer {
   /* list of streams and storages */
   FullPaths: string[];
-
-  /* Path -> CFB object mapping */
-  FullPathDir: CFBDirectory;
 
   /* Array of entries in the same order as FullPaths */
   FileIndex: CFBEntry[];

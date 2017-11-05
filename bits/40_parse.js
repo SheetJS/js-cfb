@@ -78,16 +78,15 @@ sector_list.fat_addrs = fat_addrs;
 sector_list.ssz = ssz;
 
 /* [MS-CFB] 2.6.1 Compound File Directory Entry */
-var files/*:CFBFiles*/ = {}, Paths/*:Array<string>*/ = [], FileIndex/*:CFBFileIndex*/ = [], FullPaths/*:Array<string>*/ = [], FullPathDir = {};
+var files/*:CFBFiles*/ = {}, Paths/*:Array<string>*/ = [], FileIndex/*:CFBFileIndex*/ = [], FullPaths/*:Array<string>*/ = [];
 read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, FileIndex);
 
-build_full_paths(FileIndex, FullPathDir, FullPaths, Paths);
+build_full_paths(FileIndex, FullPaths, Paths);
 Paths.shift();
 
 var o = {
 	FileIndex: FileIndex,
-	FullPaths: FullPaths,
-	FullPathDir: FullPathDir
+	FullPaths: FullPaths
 };
 
 // $FlowIgnore

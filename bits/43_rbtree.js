@@ -1,5 +1,5 @@
 /* [MS-CFB] 2.6.4 Red-Black Tree */
-function build_full_paths(FI/*:CFBFileIndex*/, FPD/*:CFBFullPathDir*/, FP/*:Array<string>*/, Paths/*:Array<string>*/)/*:void*/ {
+function build_full_paths(FI/*:CFBFileIndex*/, FP/*:Array<string>*/, Paths/*:Array<string>*/)/*:void*/ {
 	var i = 0, L = 0, R = 0, C = 0, j = 0, pl = Paths.length;
 	var dad/*:Array<number>*/ = [], q/*:Array<number>*/ = [];
 
@@ -35,7 +35,6 @@ function build_full_paths(FI/*:CFBFileIndex*/, FPD/*:CFBFullPathDir*/, FP/*:Arra
 	FP[0] += "/";
 	for(i=1; i < pl; ++i) {
 		if(FI[i].type !== 2 /* stream */) FP[i] += "/";
-		FPD[FP[i]] = FI[i];
 	}
 }
 

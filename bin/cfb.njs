@@ -88,7 +88,7 @@ function mkdirp(path/*:string*/) { path.split("/").reduce(function(acc/*:string*
 
 function write(path/*:string*/, data/*:CFBEntry*/) {
 	logit("write", fix_string(path));
-	fs.writeFileSync(path, /*::new Buffer((*/data.content/*:: :any))*/);
+	fs.writeFileSync(path, /*::new Buffer((*/data.content/*:: :any))*/ || new Buffer(0));
 }
 
 if(program.create || program.append) {

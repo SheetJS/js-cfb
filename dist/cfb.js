@@ -161,7 +161,7 @@ function new_buf(sz) {
 /* [MS-CFB] v20130118 */
 var CFB = (function _CFB(){
 var exports = {};
-exports.version = '0.13.2';
+exports.version = '0.14.0';
 /* [MS-CFB] 2.6.4 */
 function namecmp(l, r) {
 	var L = l.split("/"), R = r.split("/");
@@ -264,16 +264,15 @@ sector_list.fat_addrs = fat_addrs;
 sector_list.ssz = ssz;
 
 /* [MS-CFB] 2.6.1 Compound File Directory Entry */
-var files = {}, Paths = [], FileIndex = [], FullPaths = [], FullPathDir = {};
+var files = {}, Paths = [], FileIndex = [], FullPaths = [];
 read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, FileIndex);
 
-build_full_paths(FileIndex, FullPathDir, FullPaths, Paths);
+build_full_paths(FileIndex, FullPaths, Paths);
 Paths.shift();
 
 var o = {
 	FileIndex: FileIndex,
-	FullPaths: FullPaths,
-	FullPathDir: FullPathDir
+	FullPaths: FullPaths
 };
 
 // $FlowIgnore
@@ -325,7 +324,7 @@ function sectorify(file, ssz) {
 }
 
 /* [MS-CFB] 2.6.4 Red-Black Tree */
-function build_full_paths(FI, FPD, FP, Paths) {
+function build_full_paths(FI, FP, Paths) {
 	var i = 0, L = 0, R = 0, C = 0, j = 0, pl = Paths.length;
 	var dad = [], q = [];
 
@@ -361,7 +360,6 @@ function build_full_paths(FI, FPD, FP, Paths) {
 	FP[0] += "/";
 	for(i=1; i < pl; ++i) {
 		if(FI[i].type !== 2 /* stream */) FP[i] += "/";
-		FPD[FP[i]] = FI[i];
 	}
 }
 
