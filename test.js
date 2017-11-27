@@ -131,3 +131,38 @@ describe('input formats', function() {
 		CFB.read(fs.readFileSync(dir + '/' + cp), {type: 'buffer'});
 	});
 });
+
+describe('api', function() {
+	it('should generate a file with custom root', function() {
+		var cfb = CFB.utils.cfb_new({root:'SheetJS'});
+		if(cfb.FileIndex[0].name != 'SheetJS') throw new Error("Bad root name");
+		var newcfb = CFB.read(CFB.write(cfb, {type:'base64'}), {type:'base64'});
+		if(newcfb.FileIndex[0].name != 'SheetJS') throw new Error("Bad root name");
+	});
+	it('should be able to delete a file', function() {
+		var cfb = CFB.read(fs.readFileSync(dir + '/' + cp, 'binary'), {type: 'binary'});
+		if(!CFB.find(cfb, '/Workbook')) throw new Error("Cannot find /Workbook");
+		CFB.utils.cfb_del(cfb, '/Workbook');
+		if(CFB.utils.cfb_del(cfb, '/Workbook')) throw new Error("Found /Workbook");
+		if(CFB.find(cfb, '/Workbook')) throw new Error("Failed deleting /Workbook");
+		var newcfb = CFB.read(CFB.write(cfb, {type:'binary'}), {type:'binary'});
+		if(CFB.find(newcfb, '/Workbook')) throw new Error("Found /Workbook");
+	});
+	it('should be able to move a file', function() {
+		var cfb = CFB.read(fs.readFileSync(dir + '/' + cp, 'binary'), {type: 'binary'});
+		if(!CFB.find(cfb, '/Workbook')) throw new Error("Cannot find /Workbook");
+		CFB.utils.cfb_mov(cfb, '/Workbook', '/Book');
+		if(CFB.utils.cfb_mov(cfb, '/Workbook', '/Work')) throw new Error("Found /Workbook");
+		if(CFB.find(cfb, '/Workbook')) throw new Error("Failed deleting /Workbook");
+		var newcfb = CFB.read(CFB.write(cfb, {type:'binary'}), {type:'binary'});
+		if(CFB.find(newcfb, '/Workbook')) throw new Error("Found /Workbook");
+	});
+	it('should be able to add a file', function() {
+		var cfb = CFB.read(fs.readFileSync(dir + '/' + cp, 'binary'), {type: 'binary'});
+		CFB.utils.cfb_add(cfb, '/dafuq', [1,2,3]);
+		var newcfb = CFB.read(CFB.write(cfb, {type:'binary'}), {type:'binary'});
+		var file = CFB.find(cfb, '/dafuq');
+		if(!file || !file.content) throw new Error("Cannot find /dafuq");
+		if(file.content.length != 3) throw new Error("Bad content length " + file.content.length);
+	});
+});

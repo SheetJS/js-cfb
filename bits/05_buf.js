@@ -12,4 +12,4 @@ var s2a = function s2a(s/*:string*/) {
 	return s.split("").map(function(x){ return x.charCodeAt(0) & 0xff; });
 };
 
-var chr0 = /\u0000/g, chr1 = /[\u0001-\u0006]/;
+var chr0 = /\u0000/g, chr1 = /[\u0001-\u0006]/g;

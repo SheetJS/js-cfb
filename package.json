@@ -1,9 +1,13 @@
 {
   "name": "cfb",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "sheetjs",
   "description": "Compound File Binary File Format extractor",
-  "keywords": [ "cfb", "compression", "office" ],
+  "keywords": [
+    "cfb",
+    "compression",
+    "office"
+  ],
   "bin": {
     "cfb": "./bin/cfb.njs"
   },
@@ -15,20 +19,23 @@
     "fs": false
   },
   "dependencies": {
-    "printj":"~1.1.0",
-    "commander":"~2.11.0"
+    "commander": "^2.12.1",
+    "printj": "~1.1.0"
   },
   "devDependencies": {
-    "crc-32":"~1.1.1",
-    "mocha":"~2.5.3",
+    "crc-32": "~1.1.1",
+    "mocha": "~2.5.3",
     "blanket": "~1.2.3",
-    "@sheetjs/uglify-js":"~2.7.3",
-    "@types/node":"^8.0.7",
-    "@types/commander":"^2.9.0",
-    "dtslint": "^0.1.2",
+    "@sheetjs/uglify-js": "~2.7.3",
+    "@types/node": "^8.0.7",
+    "@types/commander": "^2.9.0",
+    "dtslint": "~0.1.2",
     "typescript": "2.2.0"
   },
-  "repository": { "type":"git", "url":"git://github.com/SheetJS/js-cfb.git" },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/SheetJS/js-cfb.git"
+  },
   "scripts": {
     "pretest": "make init",
     "test": "make test",
@@ -39,9 +46,22 @@
       "pattern": "cfb.js"
     }
   },
-  "files": [ "LICENSE", "README.md", "bin/", "dist/", "types/index.d.ts", "types/tsconfig.json", "cfb.js", "xlscfb.flow.js" ],
+  "files": [
+    "LICENSE",
+    "README.md",
+    "bin/",
+    "dist/",
+    "types/index.d.ts",
+    "types/tsconfig.json",
+    "cfb.js",
+    "xlscfb.flow.js"
+  ],
   "homepage": "http://sheetjs.com/opensource",
-  "bugs": { "url": "https://github.com/SheetJS/js-cfb/issues" },
+  "bugs": {
+    "url": "https://github.com/SheetJS/js-cfb/issues"
+  },
   "license": "Apache-2.0",
-  "engines": { "node": ">=0.8" }
+  "engines": {
+    "node": ">=0.8"
+  }
 }

@@ -64,7 +64,7 @@ var s2a = function s2a(s/*:string*/) {
 	return s.split("").map(function(x){ return x.charCodeAt(0) & 0xff; });
 };
 
-var chr0 = /\u0000/g, chr1 = /[\u0001-\u0006]/;
+var chr0 = /\u0000/g, chr1 = /[\u0001-\u0006]/g;
 var __toBuffer = function(bufs/*:Array<Array<RawBytes> >*/)/*:RawBytes*/ { var x = []; for(var i = 0; i < bufs[0].length; ++i) { x.push.apply(x, bufs[0][i]); } return x; };
 var ___toBuffer = __toBuffer;
 var __utf16le = function(b/*:RawBytes|CFBlob*/,s/*:number*/,e/*:number*/)/*:string*/ { var ss/*:Array<string>*/=[]; for(var i=s; i<e; i+=2) ss.push(String.fromCharCode(__readUInt16LE(b,i))); return ss.join("").replace(chr0,''); };
@@ -179,7 +179,7 @@ type CFBFiles = {[n:string]:CFBEntry};
 /* [MS-CFB] v20130118 */
 var CFB = (function _CFB(){
 var exports/*:CFBModule*/ = /*::(*/{}/*:: :any)*/;
-exports.version = '1.0.0';
+exports.version = '1.0.1';
 /* [MS-CFB] 2.6.4 */
 function namecmp(l/*:string*/, r/*:string*/)/*:number*/ {
 	var L = l.split("/"), R = r.split("/");

@@ -16,6 +16,7 @@ program
 	.option('-c, --create', 'create file')
 	.option('-a, --append', 'add files to CFB (overwrite existing data)')
 	.option('-d, --delete', 'delete files from CFB')
+	.option('-O, --to-stdout', 'extract raw contents to stdout')
 	.option('-z, --dump', 'dump internal representation but do not extract')
 	.option('-q, --quiet', 'process but do not report')
 	.option('--dev', 'development mode')
@@ -52,7 +53,7 @@ if(program.dump) {
 }
 if(program.repair) { X.writeFile(cfb, program.args[0]); exit(0); }
 
-function fix_string(x/*:string*/)/*:string*/ { return x.replace(/[\u0000-\u001f]/, function($$) { return sprintf("\\u%04X", $$.charCodeAt(0)); }); }
+function fix_string(x/*:string*/)/*:string*/ { return x.replace(/[\u0000-\u001f]/g, function($$) { return sprintf("\\u%04X", $$.charCodeAt(0)); }); }
 var format_date = function(date/*:Date*/)/*:string*/ {
 	return sprintf("%02u-%02u-%02u %02u:%02u", date.getUTCMonth()+1, date.getUTCDate(), date.getUTCFullYear()%100, date.getUTCHours(), date.getUTCMinutes());
 };
@@ -111,16 +112,18 @@ if(program.delete) {
 
 if(program.args.length > 1) {
 	program.args.slice(1).forEach(function(x/*:string*/) {
-		var data/*:?CFBEntry*/ = X.find(cfb, x);
+		var data/*:?CFBEntry*/ = X.find(cfb, x.replace(/\\u000\d/g,"!"));
 		if(!data) { console.error(x + ": file not found"); return; }
 		if(data.type !== 2) { console.error(x + ": not a file"); return; }
 		var idx = cfb.FileIndex.indexOf(data), path = cfb.FullPaths[idx];
+		if(program.toStdout) return process.stdout.write(/*::new Buffer((*/data.content/*:: :any))*/);
 		mkdirp(path.slice(0, path.lastIndexOf("/")));
 		write(path, data);
 	});
 	exit(0);
 }
 
+if(program.toStdout) exit(0);
 for(var i=0; i!==cfb.FullPaths.length; ++i) {
 	if(!cfb.FileIndex[i].name) continue;
 	if(cfb.FullPaths[i].slice(-1) === "/") mkdirp(cfb.FullPaths[i]);
