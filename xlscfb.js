@@ -8,7 +8,7 @@ var DO_NOT_EXPORT_CFB = true;
 /* [MS-CFB] v20130118 */
 var CFB = (function _CFB(){
 var exports = {};
-exports.version = '1.0.1';
+exports.version = '1.0.2';
 /* [MS-CFB] 2.6.4 */
 function namecmp(l, r) {
 	var L = l.split("/"), R = r.split("/");
@@ -444,6 +444,7 @@ function rebuild_cfb(cfb, f) {
 }
 
 function _write(cfb, options) {
+	var _opts = options || {};
 	rebuild_cfb(cfb);
 	var L = (function(cfb){
 		var mini_size = 0, fat_size = 0;
@@ -451,9 +452,10 @@ function _write(cfb, options) {
 			var file = cfb.FileIndex[i];
 			if(!file.content) continue;
 var flen = file.content.length;
-			if(flen === 0){}
-			else if(flen < 0x1000) mini_size += (flen + 0x3F) >> 6;
-			else fat_size += (flen + 0x01FF) >> 9;
+			if(flen > 0){
+				if(flen < 0x1000) mini_size += (flen + 0x3F) >> 6;
+				else fat_size += (flen + 0x01FF) >> 9;
+			}
 		}
 		var dir_cnt = (cfb.FullPaths.length +3) >> 2;
 		var mini_cnt = (mini_size + 7) >> 3;
@@ -536,8 +538,9 @@ flen = file.content.length;
 		}
 		file = cfb.FileIndex[i];
 		if(i === 0) file.start = file.size ? file.start - 1 : ENDOFCHAIN;
-		flen = 2*(file.name.length+1);
-		o.write_shift(64, file.name, "utf16le");
+		var _nm = (i === 0 && _opts.root) || file.name;
+		flen = 2*(_nm.length+1);
+		o.write_shift(64, _nm, "utf16le");
 		o.write_shift(2, flen);
 		o.write_shift(1, file.type);
 		o.write_shift(1, file.color);

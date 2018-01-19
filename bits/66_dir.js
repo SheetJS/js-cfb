@@ -8,8 +8,9 @@
 		}
 		file = cfb.FileIndex[i];
 		if(i === 0) file.start = file.size ? file.start - 1 : ENDOFCHAIN;
-		flen = 2*(file.name.length+1);
-		o.write_shift(64, file.name, "utf16le");
+		var _nm/*:string*/ = (i === 0 && _opts.root) || file.name;
+		flen = 2*(_nm.length+1);
+		o.write_shift(64, _nm, "utf16le");
 		o.write_shift(2, flen);
 		o.write_shift(1, file.type);
 		o.write_shift(1, file.color);

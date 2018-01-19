@@ -25,6 +25,7 @@ var Base64 = (function make_b64(){
 			var o = "";
 			var c1/*:number*/, c2/*:number*/, c3/*:number*/;
 			var e1/*:number*/, e2/*:number*/, e3/*:number*/, e4/*:number*/;
+			// eslint-disable-next-line no-useless-escape
 			input = input.replace(/[^\w\+\/\=]/g, "");
 			for(var i = 0; i < input.length;) {
 				e1 = map.indexOf(input.charAt(i++));

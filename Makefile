@@ -93,7 +93,7 @@ fullint: lint old-lint tslint flow mdlint ## Run all checks
 
 .PHONY: lint
 lint: $(TARGET) $(AUXTARGETS) ## Run eslint checks
-	@eslint --ext .js,.njs,.json,.html,.htm $(TARGET) $(AUXTARGETS) $(CMDS) $(HTMLLINT) package.json
+	@eslint --ext .js,.njs,.json,.html,.htm $(TARGET) $(CMDS) $(HTMLLINT) package.json
 	if [ -e $(CLOSURE) ]; then java -jar $(CLOSURE) $(REQS) $(FLOWTARGET) --jscomp_warning=reportUnknownTypes >/dev/null; fi
 
 .PHONY: old-lint
@@ -108,7 +108,8 @@ old-lint: $(TARGET) $(AUXTARGETS) ## Run jshint and jscs checks
 .PHONY: tslint
 tslint: $(TARGET) ## Run typescript checks
 	#@npm install dtslint typescript
-	@npm run-script dtslint
+	#@npm run-script dtslint
+	dtslint types
 
 .PHONY: flow
 flow: lint ## Run flow checker

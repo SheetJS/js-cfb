@@ -5,9 +5,10 @@
 			if(!file.content) continue;
 			/*:: if(file.content == null) throw new Error("unreachable"); */
 			var flen = file.content.length;
-			if(flen === 0){}
-			else if(flen < 0x1000) mini_size += (flen + 0x3F) >> 6;
-			else fat_size += (flen + 0x01FF) >> 9;
+			if(flen > 0){
+				if(flen < 0x1000) mini_size += (flen + 0x3F) >> 6;
+				else fat_size += (flen + 0x01FF) >> 9;
+			}
 		}
 		var dir_cnt = (cfb.FullPaths.length +3) >> 2;
 		var mini_cnt = (mini_size + 7) >> 3;
