@@ -1,6 +1,7 @@
 /* cfb.js (C) 2013-present SheetJS -- http://sheetjs.com */
 /* vim: set ts=2: */
 /*jshint mocha:true */
+/* eslint-env mocha */
 /*global process, require */
 /*::
 declare type EmptyFunc = (() => void) | null;
@@ -57,6 +58,9 @@ function parsetest(x, cfb) {
 		});
 		it('should handle "!" aliases', function() {
 			names.forEach(function(n) { if(CFB.find(cfb,n[0]) != CFB.find(cfb,n[1])) throw new Error("Bad name: " + n.join(" != ")); });
+		});
+		it('should handle size < 0', function() {
+			cfb.FileIndex.forEach(function(p, i) { if(p.size < 0) throw new Error(cfb.FullPaths[i] + " size=" + p.size); });
 		});
 	});
 	describe(x + ' should roundtrip', function() {
@@ -162,6 +166,9 @@ describe('api', function() {
 		CFB.utils.cfb_add(cfb, '/dafuq', [1,2,3]);
 		var newcfb = CFB.read(CFB.write(cfb, {type:'binary'}), {type:'binary'});
 		var file = CFB.find(cfb, '/dafuq');
+		if(!file || !file.content) throw new Error("Cannot find /dafuq");
+		if(file.content.length != 3) throw new Error("Bad content length " + file.content.length);
+		file = CFB.find(newcfb, '/dafuq');
 		if(!file || !file.content) throw new Error("Cannot find /dafuq");
 		if(file.content.length != 3) throw new Error("Bad content length " + file.content.length);
 	});

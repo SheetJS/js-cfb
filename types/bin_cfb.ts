@@ -36,10 +36,10 @@ if(program.create) {
 
 if(!fs.existsSync(program.args[0])) die(1, "must specify a filename");
 
-const opts: X.CFBParsingOptions = {type:'file'};
+const opts: X.CFB$ParsingOptions = {type:'file'};
 if(program.dev) opts.WTF = true;
 
-const cfb: X.CFBContainer = X.read(program.args[0], opts);
+const cfb: X.CFB$Container = X.read(program.args[0], opts);
 if(program.quiet) exit(0);
 
 if(program.dump) {
@@ -61,7 +61,7 @@ if(program.listFiles) {
 	let cnt = 0, rootsize = 0, filesize = 0;
 	console.log("  Length     Date   Time    Name");
 	console.log(" --------    ----   ----    ----");
-	cfb.FileIndex.forEach((file: X.CFBEntry, i: number) => {
+	cfb.FileIndex.forEach((file: X.CFB$Entry, i: number) => {
 		switch(file.type) {
 			case 5:
 				basetime = file.ct || file.mt || basetime;
@@ -85,7 +85,7 @@ const mkdirp = (path: string) => { path.split("/").reduce((acc: string, p: strin
 	return acc;
 }, ""); };
 
-const write = (path: string, data: X.CFBEntry) => {
+const write = (path: string, data: X.CFB$Entry) => {
 	logit("write", fix_string(path));
 	fs.writeFileSync(path, /*::new Buffer((*/data.content/*:: :any))*/);
 };
@@ -110,7 +110,7 @@ if(program.delete) {
 
 if(program.args.length > 1) {
 	program.args.slice(1).forEach((x: string) => {
-		const data/*:?CFBEntry*/ = X.find(cfb, x);
+		const data: X.CFB$Entry = X.find(cfb, x);
 		if(!data) { console.error(x + ": file not found"); return; }
 		if(data.type !== 2) { console.error(x + ": not a file"); return; }
 		const idx = cfb.FileIndex.indexOf(data), path = cfb.FullPaths[idx];
