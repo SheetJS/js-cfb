@@ -35,7 +35,7 @@ export interface CFB$ParsingOptions {
     raw?: boolean;
 }
 
-export type CFB$Blob = Buffer | number[] | Uint8Array;
+export type CFB$Blob = number[] | Uint8Array;
 
 export enum CFB$EntryType { unknown, storage, stream, lockbytes, property, root }
 export enum CFB$StorageType { fat, minifat }
