@@ -9,8 +9,7 @@ var Base64 = (function make_b64(){
 	return {
 		encode: function(input/*:string*/)/*:string*/ {
 			var o = "";
-			var c1/*:number*/, c2/*:number*/, c3/*:number*/;
-			var e1/*:number*/, e2/*:number*/, e3/*:number*/, e4/*:number*/;
+			var c1=0, c2=0, c3=0, e1=0, e2=0, e3=0, e4=0;
 			for(var i = 0; i < input.length; ) {
 				c1 = input.charCodeAt(i++);
 				e1 = (c1 >> 2);
@@ -29,9 +28,7 @@ var Base64 = (function make_b64(){
 		},
 		decode: function b64_decode(input/*:string*/)/*:string*/ {
 			var o = "";
-			var c1/*:number*/, c2/*:number*/, c3/*:number*/;
-			var e1/*:number*/, e2/*:number*/, e3/*:number*/, e4/*:number*/;
-			// eslint-disable-next-line no-useless-escape
+			var c1=0, c2=0, c3=0, e1=0, e2=0, e3=0, e4=0;
 			input = input.replace(/[^\w\+\/\=]/g, "");
 			for(var i = 0; i < input.length;) {
 				e1 = map.indexOf(input.charAt(i++));
@@ -177,10 +174,10 @@ type SectorList = {
 }
 type CFBFiles = {[n:string]:CFBEntry};
 */
-/* [MS-CFB] v20130118 */
+/* [MS-CFB] v20171201 */
 var CFB = (function _CFB(){
 var exports/*:CFBModule*/ = /*::(*/{}/*:: :any)*/;
-exports.version = '1.0.3';
+exports.version = '1.0.5';
 /* [MS-CFB] 2.6.4 */
 function namecmp(l/*:string*/, r/*:string*/)/*:number*/ {
 	var L = l.split("/"), R = r.split("/");
@@ -204,6 +201,7 @@ function filename(p/*:string*/)/*:string*/ {
 var fs/*:: = require('fs'); */;
 function get_fs() { return fs || (fs = require('fs')); }
 function parse(file/*:RawBytes*/, options/*:CFBReadOpts*/)/*:CFBContainer*/ {
+if(file.length < 512) throw new Error("CFB file size " + file.length + " < 512");
 var mver = 3;
 var ssz = 512;
 var nmfs = 0; // number of mini FAT sectors
@@ -360,7 +358,7 @@ function build_full_paths(FI/*:CFBFileIndex*/, FP/*:Array<string>*/, Paths/*:Arr
 		if(L !== -1) { dad[L] = dad[i]; q.push(L); }
 		if(R !== -1) { dad[R] = dad[i]; q.push(R); }
 	}
-	for(i=1; i !== pl; ++i) if(dad[i] === i) {
+	for(i=1; i < pl; ++i) if(dad[i] === i) {
 		if(R !== -1 /*NOSTREAM*/ && dad[R] !== R) dad[i] = dad[R];
 		else if(L !== -1 && dad[L] !== L) dad[i] = dad[L];
 	}
@@ -752,7 +750,6 @@ function _write(cfb/*:CFBContainer*/, options/*:CFBWriteOpts*/)/*:RawBytes*/ {
 }
 /* [MS-CFB] 2.6.4 (Unicode 3.0.1 case conversion) */
 function find(cfb/*:CFBContainer*/, path/*:string*/)/*:?CFBEntry*/ {
-	//return cfb.find(path);
 	var UCFullPaths/*:Array<string>*/ = cfb.FullPaths.map(function(x) { return x.toUpperCase(); });
 	var UCPaths/*:Array<string>*/ = UCFullPaths.map(function(x) { var y = x.split("/"); return y[y.length - (x.slice(-1) == "/" ? 2 : 1)]; });
 	var k/*:boolean*/ = false;
@@ -762,10 +759,12 @@ function find(cfb/*:CFBContainer*/, path/*:string*/)/*:?CFBEntry*/ {
 	var w/*:number*/ = k === true ? UCFullPaths.indexOf(UCPath) : UCPaths.indexOf(UCPath);
 	if(w !== -1) return cfb.FileIndex[w];
 
-	UCPath = UCPath.replace(chr0,'').replace(chr1,'!');
+	var m = !UCPath.match(chr1);
+	UCPath = UCPath.replace(chr0,'');
+	if(m) UCPath = UCPath.replace(chr1,'!');
 	for(w = 0; w < UCFullPaths.length; ++w) {
-		if(UCFullPaths[w].replace(chr0,'').replace(chr1,'!') == UCPath) return cfb.FileIndex[w];
-		if(UCPaths[w].replace(chr0,'').replace(chr1,'!') == UCPath) return cfb.FileIndex[w];
+		if((m ? UCFullPaths[w].replace(chr1,'!') : UCFullPaths[w]).replace(chr0,'') == UCPath) return cfb.FileIndex[w];
+		if((m ? UCPaths[w].replace(chr1,'!') : UCPaths[w]).replace(chr0,'') == UCPath) return cfb.FileIndex[w];
 	}
 	return null;
 }

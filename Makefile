@@ -39,9 +39,9 @@ clean-data:
 
 .PHONY: init
 init: ## Initial setup for development
-	if [ ! -e test_files ]; then git clone https://github.com/SheetJS/test_files; fi
+	if [ ! -e test_files ]; then git clone --depth=1 https://github.com/SheetJS/test_files; fi
 	cd test_files; git pull; make
-	if [ ! -e test_files_pres ]; then git clone https://github.com/SheetJS/test_files_pres; fi
+	if [ ! -e test_files_pres ]; then git clone --depth=1 https://github.com/SheetJS/test_files_pres; fi
 	cd test_files_pres; git pull
 
 .PHONY: dist

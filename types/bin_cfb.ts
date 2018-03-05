@@ -10,13 +10,14 @@ const sprintf = PRINTJ.sprintf;
 program
 	.version(X.version)
 	.usage('[options] <file> [subfiles...]')
-	.option('-q, --quiet', 'process but do not report')
 	.option('-l, --list-files', 'list files')
-	.option('-z, --dump', 'dump internal representation but do not extract')
 	.option('-r, --repair', 'attempt to repair and garbage-collect archive')
 	.option('-c, --create', 'create file')
 	.option('-a, --append', 'add files to CFB (overwrite existing data)')
 	.option('-d, --delete', 'delete files from CFB')
+	.option('-O, --to-stdout', 'extract raw contents to stdout')
+	.option('-z, --dump', 'dump internal representation but do not extract')
+	.option('-q, --quiet', 'process but do not report')
 	.option('--dev', 'development mode')
 	.option('--read', 'read but do not print out contents');
 
@@ -110,16 +111,18 @@ if(program.delete) {
 
 if(program.args.length > 1) {
 	program.args.slice(1).forEach((x: string) => {
-		const data: X.CFB$Entry = X.find(cfb, x);
+		const data: X.CFB$Entry = X.find(cfb, x.replace(/\\u000\d/g,"!"));
 		if(!data) { console.error(x + ": file not found"); return; }
 		if(data.type !== 2) { console.error(x + ": not a file"); return; }
 		const idx = cfb.FileIndex.indexOf(data), path = cfb.FullPaths[idx];
+		if(program.toStdout) return process.stdout.write(new Buffer(<any>data.content));
 		mkdirp(path.slice(0, path.lastIndexOf("/")));
 		write(path, data);
 	});
 	exit(0);
 }
 
+if(program.toStdout) exit(0);
 for(let i=0; i!==cfb.FullPaths.length; ++i) {
 	if(!cfb.FileIndex[i].name) continue;
 	if(cfb.FullPaths[i].slice(-1) === "/") mkdirp(cfb.FullPaths[i]);

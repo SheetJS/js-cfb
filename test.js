@@ -26,6 +26,7 @@ var files = fs.readdirSync('test_files').filter(ffunc);
 var f2011 = fs.readdirSync('test_files/2011').filter(ffunc);
 var f2013 = fs.readdirSync('test_files/2013').filter(ffunc);
 var fpres = fs.readdirSync('test_files_pres').filter(ffunc);
+var fxlsx = fs.readdirSync('test_files').filter(function(x) { return x.slice(-5) == ".xlsx"; });
 
 var dir = "./test_files/";
 var TYPE = "buffer";
@@ -34,7 +35,7 @@ var names = [
 	["!DocumentSummaryInformation", "\u0005"],
 	["!SummaryInformation", "\u0005"],
 	["!CompObj", "\u0001"],
-	["!DataSpaces", "\u0006"],
+	["/!DataSpaces/Version", "\u0006"],
 	["!DRMContent", "\u0009"],
 	["!DRMViewerContent", "\u0009"],
 	["!Ole", "\u0001"]
@@ -47,6 +48,7 @@ function parsetest(x, cfb) {
 				case '.xls': if(!CFB.find(cfb, 'Workbook') && !CFB.find(cfb, 'Book')) throw new Error("Cannot find workbook for " + x); break;
 				case '.ppt': if(!CFB.find(cfb, 'PowerPoint Document')) throw new Error("Cannot find presentation for " + x); break;
 				case '.doc': if(!CFB.find(cfb, 'WordDocument') && !CFB.find(cfb, 'Word Document')) throw new Error("Cannot find doc for " + x); break;
+				case 'xlsx': if(!CFB.find(cfb, 'Workbook') && !CFB.find(cfb, 'Book') && !CFB.find(cfb, 'WordDocument') && !CFB.find(cfb, 'EncryptedPackage') && !CFB.find(cfb, 'EncryptionInfo')) throw new Error("Cannot find workbook or encryption for " + x); break;
 			}
 		});
 		it('should find absolute path', function() {
@@ -54,6 +56,7 @@ function parsetest(x, cfb) {
 				case '.xls': if(!CFB.find(cfb, '/Workbook') && !CFB.find(cfb, '/Book')) throw new Error("Cannot find workbook for " + x); break;
 				case '.ppt': if(!CFB.find(cfb, '/PowerPoint Document')) throw new Error("Cannot find presentation for " + x); break;
 				case '.doc': if(!CFB.find(cfb, '/WordDocument') && !CFB.find(cfb, '/Word Document')) throw new Error("Cannot find doc for " + x); break;
+				case 'xlsx': if(!CFB.find(cfb, '/Workbook') && !CFB.find(cfb, '/Book') && !CFB.find(cfb, '/WordDocument') && !CFB.find(cfb, '/EncryptedPackage') && !CFB.find(cfb, '/EncryptionInfo')) throw new Error("Cannot find workbook or encryption for " + x); break;
 			}
 		});
 		it('should handle "!" aliases', function() {
@@ -69,7 +72,7 @@ function parsetest(x, cfb) {
 			data = CFB.write(cfb, {type:TYPE});
 			newcfb = CFB.read(data, {type:TYPE});
 		});
-		it('should preserve content', function() {
+		if(x.substr(-4) !== "xlsx") it('should preserve content', function() {
 			var _old, _new;
 			switch(x.substr(-4)) {
 				case '.xls':
@@ -119,6 +122,27 @@ describe('should parse test files', function() {
 			var cfb = CFB.read('./test_files/2013/' + x, {type: "file"});
 			parsetest(x, cfb);
 		});
+	});
+	fxlsx.forEach(function(x) {
+		it('should parse ' + x, function() {
+			try {
+				var cfb = CFB.read('./test_files/' + x, {type: "file"});
+				parsetest(x, cfb);
+			} catch(e) {
+				if(e.message.match(/CFB file size /)) return;
+				if(!e.message.match(/Header Signature: Expected d0cf11e0a1b11ae1 saw /)) throw e;
+			}
+		});
+	});
+	it('should recognize correct magic number', function() {
+		var cfb = CFB.read('./test_files/AutoFilter.xls', {type: "file"});
+		if(!CFB.find(cfb, '!CompObj')) throw new Error("Could not find !CompObj");
+		if(!CFB.find(cfb, '\u0001CompObj')) throw new Error("Could not find 1CompObj");
+		if(CFB.find(cfb, '\u0005CompObj')) throw new Error("Found 5CompObj");
+
+		if(!CFB.find(cfb, '!DocumentSummaryInformation')) throw new Error("Could not find !DSI");
+		if(!CFB.find(cfb, '\u0005DocumentSummaryInformation')) throw new Error("Could not find 5DSI");
+		if(CFB.find(cfb, '\u0001DocumentSummaryInformation')) throw new Error("Found 1DSI");
 	});
 });
 

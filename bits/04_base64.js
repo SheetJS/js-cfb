@@ -3,8 +3,7 @@ var Base64 = (function make_b64(){
 	return {
 		encode: function(input/*:string*/)/*:string*/ {
 			var o = "";
-			var c1/*:number*/, c2/*:number*/, c3/*:number*/;
-			var e1/*:number*/, e2/*:number*/, e3/*:number*/, e4/*:number*/;
+			var c1=0, c2=0, c3=0, e1=0, e2=0, e3=0, e4=0;
 			for(var i = 0; i < input.length; ) {
 				c1 = input.charCodeAt(i++);
 				e1 = (c1 >> 2);
@@ -23,9 +22,7 @@ var Base64 = (function make_b64(){
 		},
 		decode: function b64_decode(input/*:string*/)/*:string*/ {
 			var o = "";
-			var c1/*:number*/, c2/*:number*/, c3/*:number*/;
-			var e1/*:number*/, e2/*:number*/, e3/*:number*/, e4/*:number*/;
-			// eslint-disable-next-line no-useless-escape
+			var c1=0, c2=0, c3=0, e1=0, e2=0, e3=0, e4=0;
 			input = input.replace(/[^\w\+\/\=]/g, "");
 			for(var i = 0; i < input.length;) {
 				e1 = map.indexOf(input.charAt(i++));
