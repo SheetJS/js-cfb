@@ -1,6 +1,6 @@
 {
   "name": "cfb",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "author": "sheetjs",
   "description": "Compound File Binary File Format extractor",
   "keywords": [

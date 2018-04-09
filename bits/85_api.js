@@ -5,8 +5,9 @@ function cfb_new(opts/*:?any*/)/*:CFBContainer*/ {
 }
 
 function cfb_add(cfb/*:CFBContainer*/, name/*:string*/, content/*:?RawBytes*/, opts/*:?any*/)/*:CFBEntry*/ {
-	init_cfb(cfb);
-	var file = CFB.find(cfb, name);
+	var unsafe = opts && opts.unsafe;
+	if(!unsafe) init_cfb(cfb);
+	var file = !unsafe && CFB.find(cfb, name);
 	if(!file) {
 		var fpath/*:string*/ = cfb.FullPaths[0];
 		if(name.slice(0, fpath.length) == fpath) fpath = name;
@@ -17,7 +18,7 @@ function cfb_add(cfb/*:CFBContainer*/, name/*:string*/, content/*:?RawBytes*/, o
 		file = ({name: filename(name), type: 2}/*:any*/);
 		cfb.FileIndex.push(file);
 		cfb.FullPaths.push(fpath);
-		CFB.utils.cfb_gc(cfb);
+		if(!unsafe) CFB.utils.cfb_gc(cfb);
 	}
 	/*:: if(!file) throw new Error("unreachable"); */
 	file.content = (content/*:any*/);

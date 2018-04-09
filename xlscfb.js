@@ -8,7 +8,7 @@ var DO_NOT_EXPORT_CFB = true;
 /* [MS-CFB] v20171201 */
 var CFB = (function _CFB(){
 var exports = {};
-exports.version = '1.0.5';
+exports.version = '1.0.6';
 /* [MS-CFB] 2.6.4 */
 function namecmp(l, r) {
 	var L = l.split("/"), R = r.split("/");
@@ -186,8 +186,8 @@ function build_full_paths(FI, FP, Paths) {
 			if(R !== -1 && dad[R] !== R) dad[i] = dad[R];
 		}
 		if(C !== -1 /*NOSTREAM*/) dad[C] = i;
-		if(L !== -1) { dad[L] = dad[i]; q.push(L); }
-		if(R !== -1) { dad[R] = dad[i]; q.push(R); }
+		if(L !== -1) { dad[L] = dad[i]; if(q.lastIndexOf(L) < j) q.push(L); }
+		if(R !== -1) { dad[R] = dad[i]; if(q.lastIndexOf(R) < j) q.push(R); }
 	}
 	for(i=1; i < pl; ++i) if(dad[i] === i) {
 		if(R !== -1 /*NOSTREAM*/ && dad[R] !== R) dad[i] = dad[R];
@@ -648,8 +648,9 @@ function cfb_new(opts) {
 }
 
 function cfb_add(cfb, name, content, opts) {
-	init_cfb(cfb);
-	var file = CFB.find(cfb, name);
+	var unsafe = opts && opts.unsafe;
+	if(!unsafe) init_cfb(cfb);
+	var file = !unsafe && CFB.find(cfb, name);
 	if(!file) {
 		var fpath = cfb.FullPaths[0];
 		if(name.slice(0, fpath.length) == fpath) fpath = name;
@@ -660,7 +661,7 @@ function cfb_add(cfb, name, content, opts) {
 		file = ({name: filename(name), type: 2});
 		cfb.FileIndex.push(file);
 		cfb.FullPaths.push(fpath);
-		CFB.utils.cfb_gc(cfb);
+		if(!unsafe) CFB.utils.cfb_gc(cfb);
 	}
 file.content = (content);
 	file.size = content ? content.length : 0;

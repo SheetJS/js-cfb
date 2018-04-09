@@ -13,8 +13,8 @@ function build_full_paths(FI/*:CFBFileIndex*/, FP/*:Array<string>*/, Paths/*:Arr
 			if(R !== -1 && dad[R] !== R) dad[i] = dad[R];
 		}
 		if(C !== -1 /*NOSTREAM*/) dad[C] = i;
-		if(L !== -1) { dad[L] = dad[i]; q.push(L); }
-		if(R !== -1) { dad[R] = dad[i]; q.push(R); }
+		if(L !== -1) { dad[L] = dad[i]; if(q.lastIndexOf(L) < j) q.push(L); }
+		if(R !== -1) { dad[R] = dad[i]; if(q.lastIndexOf(R) < j) q.push(R); }
 	}
 	for(i=1; i < pl; ++i) if(dad[i] === i) {
 		if(R !== -1 /*NOSTREAM*/ && dad[R] !== R) dad[i] = dad[R];

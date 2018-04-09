@@ -91,10 +91,16 @@ export interface CFB$Container {
     };
 }
 
+/** cfb_add options */
+export interface CFB$AddOpts {
+    /** Skip existence and safety checks (best for bulk write operations) */
+    unsafe?: boolean;
+}
+
 /** General utilities */
 export interface CFB$Utils {
     cfb_new(opts?: any): CFB$Container;
-    cfb_add(cfb: CFB$Container, name: string, content: any, opts?: any): CFB$Entry;
+    cfb_add(cfb: CFB$Container, name: string, content: any, opts?: CFB$AddOpts): CFB$Entry;
     cfb_del(cfb: CFB$Container, name: string): boolean;
     cfb_mov(cfb: CFB$Container, old_name: string, new_name: string): boolean;
     cfb_gc(cfb: CFB$Container): void;

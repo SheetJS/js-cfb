@@ -111,6 +111,7 @@ accept a `name` argument strictly deal with absolute file names:
 
 - `.cfb_new(?opts)` creates a new container object.
 - `.cfb_add(cfb, name, ?content, ?opts)` adds a new file to the `cfb`.
+  Set the option `{unsafe:true}` to skip existence checks (for bulk additions)
 - `.cfb_del(cfb, name)` deletes the specified file
 - `.cfb_mov(cfb, old_name, new_name)` moves the old file to new path and name
 
