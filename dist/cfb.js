@@ -50,15 +50,21 @@ var Base64 = (function make_b64(){
 })();
 var has_buf = (typeof Buffer !== 'undefined' && typeof process !== 'undefined' && typeof process.versions !== 'undefined' && process.versions.node);
 
+if(typeof Buffer !== 'undefined') {
+	// $FlowIgnore
+	if(!Buffer.from) Buffer.from = function(buf, enc) { return (enc) ? new Buffer(buf, enc) : new Buffer(buf); };
+	// $FlowIgnore
+	if(!Buffer.alloc) Buffer.alloc = function(n) { return new Buffer(n); };
+}
+
 function new_raw_buf(len) {
 	/* jshint -W056 */
-	// $FlowIgnore
-	return new (has_buf ? Buffer : Array)(len);
+	return has_buf ? Buffer.alloc(len) : new Array(len);
 	/* jshint +W056 */
 }
 
 var s2a = function s2a(s) {
-	if(has_buf) return new Buffer(s, "binary");
+	if(has_buf) return Buffer.from(s, "binary");
 	return s.split("").map(function(x){ return x.charCodeAt(0) & 0xff; });
 };
 
@@ -87,7 +93,7 @@ if(has_buf) {
 	};
 	__hexlify = function(b,s,l) { return Buffer.isBuffer(b) ? b.toString('hex',s,s+l) : ___hexlify(b,s,l); };
 	__toBuffer = function(bufs) { return (bufs[0].length > 0 && Buffer.isBuffer(bufs[0][0])) ? Buffer.concat((bufs[0])) : ___toBuffer(bufs);};
-	s2a = function(s) { return new Buffer(s, "binary"); };
+	s2a = function(s) { return Buffer.from(s, "binary"); };
 	bconcat = function(bufs) { return Buffer.isBuffer(bufs[0]) ? Buffer.concat(bufs) : __bconcat(bufs); };
 }
 
@@ -159,7 +165,7 @@ function new_buf(sz) {
 /* [MS-CFB] v20171201 */
 var CFB = (function _CFB(){
 var exports = {};
-exports.version = '1.0.6';
+exports.version = '1.0.7';
 /* [MS-CFB] 2.6.4 */
 function namecmp(l, r) {
 	var L = l.split("/"), R = r.split("/");
