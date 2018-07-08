@@ -8,7 +8,7 @@ var DO_NOT_EXPORT_CFB = true;
 /* [MS-CFB] v20171201 */
 var CFB = (function _CFB(){
 var exports = {};
-exports.version = '1.0.7';
+exports.version = '1.0.8';
 /* [MS-CFB] 2.6.4 */
 function namecmp(l, r) {
 	var L = l.split("/"), R = r.split("/");

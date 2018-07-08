@@ -50,9 +50,12 @@ var Base64 = (function make_b64(){
 })();
 var has_buf = (typeof Buffer !== 'undefined' && typeof process !== 'undefined' && typeof process.versions !== 'undefined' && process.versions.node);
 
+var Buffer_from = /*::(*/function(){}/*:: :any)*/;
+
 if(typeof Buffer !== 'undefined') {
-	// $FlowIgnore
-	if(!Buffer.from) Buffer.from = function(buf, enc) { return (enc) ? new Buffer(buf, enc) : new Buffer(buf); };
+	var nbfs = !Buffer.from;
+	if(!nbfs) try { Buffer.from("foo", "utf8"); } catch(e) { nbfs = true; }
+	Buffer_from = nbfs ? function(buf, enc) { return (enc) ? new Buffer(buf, enc) : new Buffer(buf); } : Buffer.from.bind(Buffer);
 	// $FlowIgnore
 	if(!Buffer.alloc) Buffer.alloc = function(n) { return new Buffer(n); };
 }
@@ -65,7 +68,7 @@ function new_raw_buf(len/*:number*/) {
 
 var s2a = function s2a(s/*:string*/) {
 	if(has_buf) return Buffer.from(s, "binary");
-	return s.split("").map(function(x){ return x.charCodeAt(0) & 0xff; });
+	return s.split("").map(function(x/*:string*/)/*:number*/{ return x.charCodeAt(0) & 0xff; });
 };
 
 var chr0 = /\u0000/g, chr1 = /[\u0001-\u0006]/g;
@@ -93,7 +96,8 @@ if(has_buf/*:: && typeof Buffer !== 'undefined'*/) {
 	};
 	__hexlify = function(b/*:RawBytes|CFBlob*/,s/*:number*/,l/*:number*/)/*:string*/ { return Buffer.isBuffer(b)/*:: && b instanceof Buffer*/ ? b.toString('hex',s,s+l) : ___hexlify(b,s,l); };
 	__toBuffer = function(bufs/*:Array<Array<RawBytes>>*/)/*:RawBytes*/ { return (bufs[0].length > 0 && Buffer.isBuffer(bufs[0][0])) ? Buffer.concat((bufs[0]/*:any*/)) : ___toBuffer(bufs);};
-	s2a = function(s/*:string*/)/*:RawBytes*/ { return Buffer.from(s, "binary"); };
+	// $FlowIgnore
+	s2a = function(s/*:string*/)/*:RawBytes*/ { return Buffer_from(s, "binary"); };
 	bconcat = function(bufs/*:Array<RawBytes>*/)/*:RawBytes*/ { return Buffer.isBuffer(bufs[0]) ? Buffer.concat(/*::(*/bufs/*:: :any)*/) : __bconcat(bufs); };
 }
 
@@ -183,7 +187,7 @@ type CFBFiles = {[n:string]:CFBEntry};
 /* [MS-CFB] v20171201 */
 var CFB = (function _CFB(){
 var exports/*:CFBModule*/ = /*::(*/{}/*:: :any)*/;
-exports.version = '1.0.7';
+exports.version = '1.0.8';
 /* [MS-CFB] 2.6.4 */
 function namecmp(l/*:string*/, r/*:string*/)/*:number*/ {
 	var L = l.split("/"), R = r.split("/");
