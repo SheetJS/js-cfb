@@ -14,25 +14,38 @@ export function read(f: CFB$Blob | string, options?: CFB$ParsingOptions): CFB$Co
 export function find(cfb: CFB$Container, path: string): CFB$Entry | null;
 
 /** Generate a container file */
-export function write(cfb: CFB$Container, options?: any): any;
+export function write(cfb: CFB$Container, options?: CFB$WritingOptions): any;
 
 /** Write a container file to the filesystem */
-export function writeFile(cfb: CFB$Container, filename: string, options?: any): any;
+export function writeFile(cfb: CFB$Container, filename: string, options?: CFB$WritingOptions): any;
 
 /** Utility functions */
 export const utils: CFB$Utils;
 
-
-/** Options for read and readFile */
-export interface CFB$ParsingOptions {
+export interface CFB$CommonOptions {
     /** Input data encoding */
     type?: 'base64' | 'binary' | 'buffer' | 'file' | 'array';
 
     /** If true, throw errors when features are not understood */
     WTF?: boolean;
+}
 
+/** Options for read and readFile */
+export interface CFB$ParsingOptions extends CFB$CommonOptions {
     /** If true, include raw data in output */
     raw?: boolean;
+}
+
+/** Options for write and writeFile */
+export interface CFB$WritingOptions extends CFB$CommonOptions {
+    /** Output file type */
+    fileType?: 'cfb' | 'zip';
+
+    /** Override default root entry name (CFB only) */
+    root?: string;
+
+    /** Enable compression (ZIP only) */
+    compression?: boolean;
 }
 
 export type CFB$Blob = number[] | Uint8Array;

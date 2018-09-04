@@ -32,7 +32,9 @@ a { text-decoration: none }
 <b>Advanced Demo Options:</b>
 Use readAsBinaryString: (when available) <input type="checkbox" name="userabs" checked>
 
-<a id="saveit" onclick="savefile();" href="#">Export data</a>
+<b>Export Current File</b>
+- <a id="savecfb" onclick="savefile('cfb');" href="#">Export data as CFB</a>
+- <a id="savezip" onclick="savefile('zip');" href="#">Export data as ZIP</a>
 </pre>
 <pre id="out"></pre>
 <br />
@@ -40,7 +42,7 @@ Use readAsBinaryString: (when available) <input type="checkbox" name="userabs" c
 <script src="https://unpkg.com/printj/dist/printj.min.js"></script>
 <script src="cfb.js"></script>
 <script src="//rawgit.com/eligrey/Blob.js/master/Blob.js"></script>
-<script src="//rawgit.com/eligrey/FileSaver.js/master/FileSaver.js"></script>
+<script src="//unpkg.com/filesaver.js/FileSaver.js"></script>
 <script>
 /*jshint browser:true */
 /* eslint-env browser */
@@ -58,6 +60,7 @@ var get_manifest = (function() {
 	};
 	return function get_manifest(cfb) {
 		var out = [];
+		var rlen = cfb.FullPaths[0].length;
 
 		var basetime = new Date(1980,0,1);
 		var cnt = 0, rootsize = 0, filesize = 0;
@@ -70,7 +73,10 @@ var get_manifest = (function() {
 					rootsize = file.size;
 					break;
 				case 2:
-					out.push(sprintf("%9lu  %s   <a href=\"#\" onclick=\"download_file(%d);\">%s</a>", file.size, format_date(basetime), i, fix_string(cfb.FullPaths[i])));
+					var fixname = fix_string(cfb.FullPaths[i]);
+					if(fixname.match(/\\u0001Sh33tJ5/)) return;
+					fixname = fixname.slice(rlen);
+					out.push(sprintf("%9lu  %s   <a href=\"#\" onclick=\"download_file(%d);\">%s</a>", file.size, format_date(basetime), i, fixname));
 					filesize += file.size;
 					++cnt;
 			}
@@ -149,12 +155,12 @@ var savefile = (function() {
 		}
 	};
 
-	return function savefile() {
+	return function savefile(type) {
 		if(!global_cfb) return alert("Must load a file first!");
 		if(typeof console !== 'undefined') console.log(global_cfb);
-		var data = CFB.write(global_cfb, {type:'binary'});
+		var data = CFB.write(global_cfb, {type:'binary', fileType: type});
 		if(typeof console !== 'undefined') console.log(data);
-		saveAs(new Blob([s2ab(data)],{type:"application/octet-stream"}), "sheetjs.xls");
+		saveAs(new Blob([s2ab(data)],{type:"application/octet-stream"}), "SheetJSCFBDemo." + type);
 	};
 })();
 

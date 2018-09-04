@@ -19,10 +19,15 @@ program
 	.option('-O, --to-stdout', 'extract raw contents to stdout')
 	.option('-z, --dump', 'dump internal representation but do not extract')
 	.option('-q, --quiet', 'process but do not report')
+	.option('--here', 'skip the CFB root name when extracting')
+	.option('--osx', 'use OSX-style unzip listing')
+	.option('--zlib', 'use native zlib')
+	.option('--local', 'print times in local timezone')
 	.option('--dev', 'development mode')
 	.option('--read', 'read but do not print out contents');
-
 program.parse(process.argv);
+
+if(program.zlib) X.utils.use_zlib(require('zlib'));
 
 var exit = process.exit;
 var die = function(errno/*:number*/, msg/*:string*/) { console.error(n + ": " + msg); exit(errno); };
@@ -53,16 +58,32 @@ if(program.dump) {
 }
 if(program.repair) { X.writeFile(cfb, program.args[0]); exit(0); }
 
+var rlen = cfb.FullPaths[0].length;
+
 function fix_string(x/*:string*/)/*:string*/ { return x.replace(/[\u0000-\u001f]/g, function($$) { return sprintf("\\u%04X", $$.charCodeAt(0)); }); }
-var format_date = function(date/*:Date*/)/*:string*/ {
-	return sprintf("%02u-%02u-%02u %02u:%02u", date.getUTCMonth()+1, date.getUTCDate(), date.getUTCFullYear()%100, date.getUTCHours(), date.getUTCMinutes());
+var format_date = function(date/*:Date*/, osx/*:?any*/)/*:string*/ {
+	var datefmt = osx ? "%02u-%02u-%04u %02u:%02u": "%02u-%02u-%02u %02u:%02u";
+	var MM = program.local ? date.getMonth() + 1 : date.getUTCMonth() + 1;
+	var DD = program.local ? date.getDate() : date.getUTCDate();
+	var YY = (program.local ? date.getFullYear() : date.getUTCFullYear())%(osx ? 10000 : 100);
+	var hh = program.local ? date.getHours() : date.getUTCHours();
+	var mm = program.local ? date.getMinutes() : date.getUTCMinutes();
+	return sprintf(datefmt, MM, DD, YY, hh, mm);
 };
 
 if(program.listFiles) {
-	var basetime = new Date(1980,0,1);
+	var basetime = new Date(Date.UTC(1980,0,1));
 	var cnt = 0, rootsize = 0, filesize = 0;
-	console.log("  Length     Date   Time    Name");
-	console.log(" --------    ----   ----    ----");
+	var fmtstr = "%9lu  %s   %s";
+	if(program.osx) {
+		console.log("Archive:  " + program.args[0]);
+		console.log("  Length      Date    Time    Name");
+		console.log("---------  ---------- -----   ----");
+		fmtstr = "%9lu  %s   %s";
+	} else {
+		console.log("  Length     Date   Time    Name");
+		console.log(" --------    ----   ----    ----");
+	}
 	cfb.FileIndex.forEach(function(file/*:CFBEntry*/, i/*:number*/) {
 		switch(file.type) {
 			case 5:
@@ -70,13 +91,22 @@ if(program.listFiles) {
 				rootsize = file.size;
 				break;
 			case 2:
-				console.log(sprintf("%9lu  %s   %s", file.size, format_date(basetime), fix_string(cfb.FullPaths[i])));
+				var fixname = fix_string(cfb.FullPaths[i]);
+				if(program.osx && fixname.match(/\\u0001Sh33tJ5/)) return;
+				if(program.here) fixname = fixname.slice(rlen);
+				console.log(sprintf(fmtstr, file.size, format_date(file.mt || basetime, program.osx), fixname));
 				filesize += file.size;
 				++cnt;
 		}
 	});
-	console.log(" --------                   -------");
-	console.log(sprintf("%9lu                   %lu file%s", rootsize || filesize, cnt, (cnt !== 1 ? "s" : "")));
+	var outfmt = "%9lu                   %lu file%s";
+	if(program.osx) {
+		console.log("---------                     -------");
+		outfmt = "%9lu                     %lu file%s";
+	} else {
+		console.log(" --------                   -------");
+	}
+	console.log(sprintf(outfmt, rootsize || filesize, cnt, (cnt !== 1 ? "s" : "")));
 
 	exit(0);
 }
@@ -124,8 +154,13 @@ if(program.args.length > 1) {
 }
 
 if(program.toStdout) exit(0);
-for(var i=0; i!==cfb.FullPaths.length; ++i) {
+for(var i=program.here ? 1 : 0; i!==cfb.FullPaths.length; ++i) {
 	if(!cfb.FileIndex[i].name) continue;
-	if(cfb.FullPaths[i].slice(-1) === "/") mkdirp(cfb.FullPaths[i]);
-	else write(cfb.FullPaths[i], cfb.FileIndex[i]);
+	var fp = cfb.FullPaths[i];
+	if(program.here) fp = fp.slice(rlen);
+	if(fp.slice(-1) === "/") mkdirp(fp);
+	else {
+		if(fp.indexOf("/") > -1) mkdirp(fp.slice(0, fp.lastIndexOf("/")));
+		write(fp, cfb.FileIndex[i]);
+	}
 }

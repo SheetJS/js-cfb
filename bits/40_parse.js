@@ -1,4 +1,5 @@
 function parse(file/*:RawBytes*/, options/*:CFBReadOpts*/)/*:CFBContainer*/ {
+if(file[0] == 0x50 && file[1] == 0x4b) return parse_zip(file, options);
 if(file.length < 512) throw new Error("CFB file size " + file.length + " < 512");
 var mver = 3;
 var ssz = 512;
@@ -19,6 +20,8 @@ var mv = check_get_mver(blob);
 mver = mv[0];
 switch(mver) {
 	case 3: ssz = 512; break; case 4: ssz = 4096; break;
+	case 0: if(mv[1] == 0) return parse_zip(file, options);
+	/* falls through */
 	default: throw new Error("Major Version: Expected 3 or 4 saw " + mver);
 }
 

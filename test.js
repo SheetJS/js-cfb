@@ -12,9 +12,11 @@ declare var before:(test:EmptyFunc)=>void;
 */
 var CFB;
 var fs = require('fs');
-describe('source', function() { it('should load', function() { CFB = require('./'); }); });
+describe('source', function() { it('should load', function() { CFB = require('./'); if(zlibify) CFB.utils.use_zlib(require("zlib")); }); });
 var CRC32 = require('crc-32');
 
+var WTF = !!process.env.WTF;
+var zlibify = !!process.env.ZLIB;
 var ex = [".xls",".doc",".ppt"];
 if(process.env.FMTS) ex=process.env.FMTS.split(":").map(function(x){return x[0]==="."?x:"."+x;});
 if(process.env.FMTS === "full") process.env.FMTS = ex.join(":");
@@ -26,12 +28,12 @@ var files = fs.readdirSync('test_files').filter(ffunc);
 var f2011 = fs.readdirSync('test_files/2011').filter(ffunc);
 var f2013 = fs.readdirSync('test_files/2013').filter(ffunc);
 var fpres = fs.readdirSync('test_files_pres').filter(ffunc);
-var fxlsx = fs.readdirSync('test_files').filter(function(x) { return x.slice(-5) == ".xlsx"; });
+var fxlsx = fs.readdirSync('test_files').filter(function(x) { return x.slice(-5) == ".xlsx" && fails.indexOf(x) === -1; });
 
 var dir = "./test_files/";
 var TYPE = "buffer";
 
-var names = [
+var names/*:Array<Array<string>>*/ = [
 	["!DocumentSummaryInformation", "\u0005"],
 	["!SummaryInformation", "\u0005"],
 	["!CompObj", "\u0001"],
@@ -41,23 +43,45 @@ var names = [
 	["!Ole", "\u0001"]
 ].map(function(x) { return [x[0], x[0].replace("!", x[1])]; });
 
+/* [ rel, abs ] */
+var ENTRIES/*:Array<Array<string>>*/ = [
+	/* DOC */
+	["WordDocument", "/WordDocument"],
+	/* PPT */
+	["PowerPoint Document", "/PowerPoint Document"],
+	/* XLS */
+	["Workbook", "/Workbook"],
+	["Book", "/Book"],
+	/* OPC */
+	["[Content_Types].xml", "/[Content_Types].xml"],
+	/* ODF */
+	["content.xml", "/content.xml"],
+	/* XLSX */
+	["workbook.xml", "/xl/workbook.xml"],
+	/* Encrypted */
+	["EncryptedPackage", "/EncryptedPackage"],
+	["EncryptionInfo", "/EncryptionInfo"]
+];
+
+var REL_FILES = ENTRIES.map(function(e) { return e[0]; });
+var ABS_FILES = ENTRIES.map(function(e) { return e[1]; });
+
+function has_file(cfb, files/*:Array<string>*/)/*:string*/ {
+	for(var i = 0; i < files.length; ++i) if(CFB.find(cfb, files[i])) return files[i];
+	return "";
+}
+
+function zero_dates(cfb) {
+	cfb.FileIndex.forEach(function(f) { delete f.mt; delete f.ct; });
+}
+
 function parsetest(x, cfb) {
 	describe(x + ' should have basic parts', function() {
 		it('should find relative path', function() {
-			switch(x.substr(-4)) {
-				case '.xls': if(!CFB.find(cfb, 'Workbook') && !CFB.find(cfb, 'Book')) throw new Error("Cannot find workbook for " + x); break;
-				case '.ppt': if(!CFB.find(cfb, 'PowerPoint Document')) throw new Error("Cannot find presentation for " + x); break;
-				case '.doc': if(!CFB.find(cfb, 'WordDocument') && !CFB.find(cfb, 'Word Document')) throw new Error("Cannot find doc for " + x); break;
-				case 'xlsx': if(!CFB.find(cfb, 'Workbook') && !CFB.find(cfb, 'Book') && !CFB.find(cfb, 'WordDocument') && !CFB.find(cfb, 'EncryptedPackage') && !CFB.find(cfb, 'EncryptionInfo')) throw new Error("Cannot find workbook or encryption for " + x); break;
-			}
+			if(!has_file(cfb, REL_FILES)) throw new Error("Cannot find content for " + x);
 		});
 		it('should find absolute path', function() {
-			switch(x.substr(-4)) {
-				case '.xls': if(!CFB.find(cfb, '/Workbook') && !CFB.find(cfb, '/Book')) throw new Error("Cannot find workbook for " + x); break;
-				case '.ppt': if(!CFB.find(cfb, '/PowerPoint Document')) throw new Error("Cannot find presentation for " + x); break;
-				case '.doc': if(!CFB.find(cfb, '/WordDocument') && !CFB.find(cfb, '/Word Document')) throw new Error("Cannot find doc for " + x); break;
-				case 'xlsx': if(!CFB.find(cfb, '/Workbook') && !CFB.find(cfb, '/Book') && !CFB.find(cfb, '/WordDocument') && !CFB.find(cfb, '/EncryptedPackage') && !CFB.find(cfb, '/EncryptionInfo')) throw new Error("Cannot find workbook or encryption for " + x); break;
-			}
+			if(!has_file(cfb, ABS_FILES)) throw new Error("Cannot find content for " + x);
 		});
 		it('should handle "!" aliases', function() {
 			names.forEach(function(n) { if(CFB.find(cfb,n[0]) != CFB.find(cfb,n[1])) throw new Error("Bad name: " + n.join(" != ")); });
@@ -67,33 +91,50 @@ function parsetest(x, cfb) {
 		});
 	});
 	describe(x + ' should roundtrip', function() {
-		var data, newcfb;
-		it('should roundtrip safely', function() {
-			data = CFB.write(cfb, {type:TYPE});
-			newcfb = CFB.read(data, {type:TYPE});
+		var datacfb, newcfb;
+		var datazip, newzip;
+		var datacmp, newcmp;
+		before(function() {
+			/* cfb */
+			zero_dates(cfb);
+			datacfb = CFB.write(cfb, {type:TYPE});
+			newcfb = CFB.read(datacfb, {type:TYPE});
+			zero_dates(newcfb);
+
+			/* zip */
+			zero_dates(cfb);
+			datazip = CFB.write(cfb, {type:TYPE, fileType:"zip"});
+			newzip = CFB.read(datazip, {type:TYPE});
+			zero_dates(newzip);
+
+			/* zip with compression */
+			zero_dates(cfb);
+			datacmp = CFB.write(cfb, {type:TYPE, fileType:"zip", compression:1});
+			newcmp = CFB.read(datacmp, {type:TYPE});
+			zero_dates(newcmp);
 		});
-		if(x.substr(-4) !== "xlsx") it('should preserve content', function() {
-			var _old, _new;
-			switch(x.substr(-4)) {
-				case '.xls':
-					_old = CFB.find(cfb, '/Workbook') || CFB.find(cfb, '/Book');
-					_new = CFB.find(newcfb, '/Workbook') || CFB.find(newcfb, '/Book');
-					break;
-				case '.ppt':
-					_old = CFB.find(cfb, '/PowerPoint Document');
-					_new = CFB.find(newcfb, '/PowerPoint Document');
-					break;
-				case '.doc':
-					_old = CFB.find(cfb, '/WordDocument') || CFB.find(cfb, '/Word Document');
-					_new = CFB.find(newcfb, '/WordDocument') || CFB.find(newcfb, '/Word Document');
-					break;
-			}
-			/*:: if(!_old || !_new) throw "unreachable"; */
-			if(CRC32.buf(_old.content) != CRC32.buf(_new.content)) throw new Error(x + " failed roundtrip test");
+		it('should preserve content', function() {
+			var path = has_file(cfb, REL_FILES);
+			var _old = CFB.find(cfb, path);
+			var _cfb = CFB.find(newcfb, path);
+			var _zip = CFB.find(newzip, path);
+			var _cmp = CFB.find(newcmp, path);
+			/*:: if(!_old || !_cfb || !_zip || !_cmp) throw "unreachable"; */
+			var c1 = CRC32.buf(_old.content);
+			var c2 = CRC32.buf(_cfb.content);
+			var c3 = CRC32.buf(_zip.content);
+			var c4 = CRC32.buf(_cmp.content);
+			if(c1 != c2) throw new Error(x + " failed CFB roundtrip test");
+			if(c1 != c3) throw new Error(x + " failed ZIP roundtrip test");
+			if(c1 != c4) throw new Error(x + " failed ZIP compression roundtrip test");
 		});
 		it('should be idempotent', function() {
 			var dat2 = CFB.write(newcfb, {type:TYPE});
-			if(CRC32.buf(data) != CRC32.buf(dat2)) throw new Error(x + " failed idempotent test");
+			if(CRC32.buf(datacfb) != CRC32.buf(dat2)) throw new Error(x + " failed CFB idempotent test");
+			var dat2zip = CFB.write(newzip, {type:TYPE, fileType:"zip"});
+			if(CRC32.buf(datazip) != CRC32.buf(dat2zip)) throw new Error(x + " failed ZIP idempotent test");
+			var dat2cmp = CFB.write(newcmp, {type:TYPE, fileType:"zip", compression:1});
+			if(CRC32.buf(datacmp) != CRC32.buf(dat2cmp)) throw new Error(x + " failed ZIP idempotent test");
 		});
 	});
 }
@@ -101,32 +142,32 @@ function parsetest(x, cfb) {
 describe('should parse test files', function() {
 	files.forEach(function(x) {
 		it('should parse ' + x, function() {
-			var cfb = CFB.read('./test_files/' + x, {type: "file"});
+			var cfb = CFB.read('./test_files/' + x, {type: "file", WTF: WTF});
 			parsetest(x, cfb);
 		});
 	});
 	fpres.forEach(function(x) {
 		it('should parse ' + x, function() {
-			var cfb = CFB.read('./test_files_pres/' + x, {type: "file"});
+			var cfb = CFB.read('./test_files_pres/' + x, {type: "file", WTF: WTF});
 			parsetest(x, cfb);
 		});
 	});
 	f2011.forEach(function(x) {
 		it('should parse ' + x, function() {
-			var cfb = CFB.read('./test_files/2011/' + x, {type: "file"});
+			var cfb = CFB.read('./test_files/2011/' + x, {type: "file", WTF: WTF});
 			parsetest(x, cfb);
 		});
 	});
 	f2013.forEach(function(x) {
 		it('should parse ' + x, function() {
-			var cfb = CFB.read('./test_files/2013/' + x, {type: "file"});
+			var cfb = CFB.read('./test_files/2013/' + x, {type: "file", WTF: WTF});
 			parsetest(x, cfb);
 		});
 	});
 	fxlsx.forEach(function(x) {
 		it('should parse ' + x, function() {
 			try {
-				var cfb = CFB.read('./test_files/' + x, {type: "file"});
+				var cfb = CFB.read('./test_files/' + x, {type: "file", WTF: WTF});
 				parsetest(x, cfb);
 			} catch(e) {
 				if(e.message.match(/CFB file size /)) return;
@@ -147,16 +188,53 @@ describe('should parse test files', function() {
 });
 
 var cp = 'custom_properties.xls';
-
+var xl = 'custom_properties.xlsx';
 describe('input formats', function() {
 	it('should read binary strings', function() {
 		CFB.read(fs.readFileSync(dir + '/' + cp, 'binary'), {type: 'binary'});
+		CFB.read(fs.readFileSync(dir + '/' + xl, 'binary'), {type: 'binary'});
 	});
 	it('should read base64 strings', function() {
 		CFB.read(fs.readFileSync(dir + '/' + cp, 'base64'), {type: 'base64'});
+		CFB.read(fs.readFileSync(dir + '/' + xl, 'base64'), {type: 'base64'});
 	});
 	it('should read buffers', function() {
 		CFB.read(fs.readFileSync(dir + '/' + cp), {type: 'buffer'});
+		CFB.read(fs.readFileSync(dir + '/' + xl), {type: 'buffer'});
+	});
+});
+describe('output formats', function() {
+	it('should write binary strings', function() {
+		var t = [
+			[ "CFB", CFB.write(CFB.read(fs.readFileSync(dir + '/' + cp, 'binary'), {type: 'binary'}), {type: 'binary'})],
+			[ "ZIP", CFB.write(CFB.read(fs.readFileSync(dir + '/' + xl, 'binary'), {type: 'binary'}), {type: 'binary', fileType: 'zip'})]
+		];
+		t.forEach(function(r) {
+			if(typeof r[1] != "string") throw new Error(r[0] + " binary write failed");
+			var good = false;
+			for(var i = 0; i < r[1].length; ++i) {
+				if(r[1].charCodeAt(i) == 0x00) good = true;
+				else if(r[1].charCodeAt(i) > 0xFF) { good = false; break; }
+			}
+			if(!good) throw new Error(r[0] + " binary write failed");
+		});
+	});
+	it('should write base64 strings', function() {
+		var t = [
+			[ "CFB", CFB.write(CFB.read(fs.readFileSync(dir + '/' + cp, 'base64'), {type: 'base64'}), {type: 'base64'})],
+			[ "ZIP", CFB.write(CFB.read(fs.readFileSync(dir + '/' + xl, 'base64'), {type: 'base64'}), {type: 'base64', fileType: 'zip'})]
+		];
+		t.forEach(function(r) {
+			if(typeof r[1] != "string") throw new Error(r[0] + " base64 write failed");
+			var good = false;
+			if(r[1].match(/[^a-zA-Z0-9+\/\+\.=]/)) throw new Error(r[0] + " base64 write failed");
+		});
+	});
+	it('should write buffers', function() {
+		var t1 = CFB.write(CFB.read(fs.readFileSync(dir + '/' + cp), {type: 'buffer'}), {type: 'buffer'});
+		var t2 = CFB.write(CFB.read(fs.readFileSync(dir + '/' + xl), {type: 'buffer'}), {type: 'buffer'});
+		if(!Buffer.isBuffer(t1)) throw new Error("CFB buffer write failed");
+		if(!Buffer.isBuffer(t2)) throw new Error("ZIP buffer write failed");
 	});
 });
 

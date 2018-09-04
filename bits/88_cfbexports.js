@@ -13,6 +13,9 @@ exports.utils = {
 	CheckField: CheckField,
 	prep_blob: prep_blob,
 	bconcat: bconcat,
+	use_zlib: use_zlib,
+	_deflateRaw: _deflate,
+	_inflateRaw: _inflate,
 	consts: consts
 };
 

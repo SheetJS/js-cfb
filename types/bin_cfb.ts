@@ -1,6 +1,7 @@
 /* cfb.js (C) 2013-present  SheetJS -- http://sheetjs.com */
 /* eslint-env node */
 /* vim: set ts=2 ft=javascript: */
+/// <reference types="../node_modules/@types/node" />
 const n = "cfb";
 import * as X from 'cfb';
 import fs = require('fs');

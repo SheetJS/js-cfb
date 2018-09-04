@@ -64,6 +64,7 @@ type CFBWriteOpts = any;
 
 interface CFBReadOpts {
 	type?:string;
+	root?:string;
 };
 
 type CFBFileIndex = Array<CFBEntry>;

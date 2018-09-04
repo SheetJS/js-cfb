@@ -1,13 +1,11 @@
-# Compound File Binary Format
+# Container File Blobs
 
-Pure JS implementation of MS-CFB: Compound File Binary File Format, a container
-format used in many Microsoft file types (XLS, DOC, VBA blobs in XLSX and XLSB)
+Pure JS implementation of various container file formats, including ZIP and CFB.
 
 [![Build Status](https://travis-ci.org/SheetJS/js-cfb.svg?branch=master)](https://travis-ci.org/SheetJS/js-cfb)
 [![Coverage Status](http://img.shields.io/coveralls/SheetJS/js-cfb/master.svg)](https://coveralls.io/r/SheetJS/js-cfb?branch=master)
 [![Dependencies Status](https://david-dm.org/sheetjs/js-cfb/status.svg)](https://david-dm.org/sheetjs/js-cfb)
 [![NPM Downloads](https://img.shields.io/npm/dt/cfb.svg)](https://npmjs.org/package/cfb)
-[![ghit.me](https://ghit.me/badge.svg?repo=sheetjs/js-xlsx)](https://ghit.me/repo/sheetjs/js-xlsx)
 [![Analytics](https://ga-beacon.appspot.com/UA-36810333-1/SheetJS/js-cfb?pixel)](https://github.com/SheetJS/js-cfb)
 
 ## Installation
@@ -79,29 +77,48 @@ The CFB object exposes the following methods and properties:
 `CFB.parse(blob)` takes a nodejs Buffer or an array of bytes and returns an
 parsed representation of the data.
 
-`CFB.read(blob, opts)` wraps `parse`.  `opts.type` controls the behavior:
+`CFB.read(blob, opts)` wraps `parse`.
+
+`CFB.find(cfb, path)` performs a case-insensitive match for the path (or file
+name, if there are no slashes) and returns an entry object or null if not found.
+
+`CFB.write(cfb, opts)` generates a file based on the container.
+
+`CFB.writeFile(cfb, filename, opts)` creates a file with the specified name.
+
+### Parse Options
+
+`CFB.read` takes an options argument.  `opts.type` controls the behavior:
 
 | `type`     | expected input                                                  |
-|------------|-----------------------------------------------------------------|
+|------------|:----------------------------------------------------------------|
 | `"base64"` | string: Base64 encoding of the file                             |
 | `"binary"` | string: binary string (byte `n` is `data.charCodeAt(n)`)        |
 | `"file"`   | string: path of file that will be read (nodejs only)            |
 | (default)  | buffer or array of 8-bit unsigned int (byte `n` is `data[n]`)   |
 
-`CFB.find(cfb, path)` performs a case-insensitive match for the path (or file
-name, if there are no slashes) and returns an entry object or null if not found.
 
-`CFB.write(cfb, opts)` generates a file based on the container.  `opts.type`
-controls the behavior:
+### Write Options
+
+`CFB.write` and `CFB.writeFile` take options argument.
+
+`opts.type` controls the behavior:
 
 | `type`     | output                                                          |
-|------------|-----------------------------------------------------------------|
+|------------|:----------------------------------------------------------------|
 | `"base64"` | string: Base64 encoding of the file                             |
 | `"binary"` | string: binary string (byte `n` is `data.charCodeAt(n)`)        |
 | `"file"`   | string: path of file that will be created (nodejs only)         |
 | (default)  | buffer if available, array of 8-bit unsigned int otherwise      |
 
-`CFB.writeFile(cfb, filename, opts)` creates a file with the specified name.
+`opts.fileType` controls the output file type:
+
+| `fileType`         | output        |
+|:-------------------|:--------------|
+| `'cfb'` (default)  | CFB container |
+| `'zip'`            | ZIP file      |
+
+`opts.compression` enables DEFLATE compression for ZIP file type.
 
 
 ## Utility Functions
@@ -114,6 +131,12 @@ accept a `name` argument strictly deal with absolute file names:
   Set the option `{unsafe:true}` to skip existence checks (for bulk additions)
 - `.cfb_del(cfb, name)` deletes the specified file
 - `.cfb_mov(cfb, old_name, new_name)` moves the old file to new path and name
+- `.use_zlib(require("zlib"))` loads a nodejs zlib instance.
+
+By default, the library uses a pure JS inflate/deflate implementation.  NodeJS
+`zlib.InflateRaw` exposes the number of bytes read in versions after `8.11.0`.
+If a supplied `zlib` does not support the required features, a warning will be
+displayed in the console and the pure JS fallback will be used.
 
 
 ## Container Object Description
@@ -146,11 +169,7 @@ granted by the Apache 2.0 License are reserved by the Original Author.
 
 ## References
 
-
-<details>
-	<summary><b>OSP-covered Specifications</b> (click to show)</summary>
-
  - [MS-CFB]: Compound File Binary File Format
-
-</details>
+ - ZIP `APPNOTE.TXT`: https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-6.3.4.TXT
+ - RFC1951: https://www.ietf.org/rfc/rfc1951.txt
 

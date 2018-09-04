@@ -1,5 +1,6 @@
 /* [MS-CFB] 2.2 Compound File Header -- read up to major version */
 function check_get_mver(blob/*:CFBlob*/)/*:[number, number]*/ {
+	if(blob[blob.l] == 0x50 && blob[blob.l + 1] == 0x4b) return [0, 0];
 	// header signature 8
 	blob.chk(HEADER_SIGNATURE, 'Header Signature: ');
 

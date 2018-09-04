@@ -1,6 +1,13 @@
+# not CFB or ZIP
 apachepoi_testEXCEL_3.xls
 apachepoi_testEXCEL_4.xls
 xlrd_biff4_no_format_no_window2.xls
-roo_type_excelx.xls
-roo_type_openoffice.xls
 libreoffice_calc_csv-import_malformed-quotes.xls
+# file exceeding 31 chars
+apachepoi_59746_NoRowNums.xlsx
+apachepoi_WithEmbeded.xlsx
+apachepoi_picture.xlsx
+roo_name_with_leading_slash.xlsx
+spout-xlsx_sheet_with_prefixed_xml_files.xlsx
+# not a valid file
+openpyxl_r_null_archive.xlsx

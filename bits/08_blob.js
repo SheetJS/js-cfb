@@ -22,7 +22,6 @@ if(has_buf/*:: && typeof Buffer !== 'undefined'*/) {
 	};
 	__hexlify = function(b/*:RawBytes|CFBlob*/,s/*:number*/,l/*:number*/)/*:string*/ { return Buffer.isBuffer(b)/*:: && b instanceof Buffer*/ ? b.toString('hex',s,s+l) : ___hexlify(b,s,l); };
 	__toBuffer = function(bufs/*:Array<Array<RawBytes>>*/)/*:RawBytes*/ { return (bufs[0].length > 0 && Buffer.isBuffer(bufs[0][0])) ? Buffer.concat((bufs[0]/*:any*/)) : ___toBuffer(bufs);};
-	// $FlowIgnore
 	s2a = function(s/*:string*/)/*:RawBytes*/ { return Buffer_from(s, "binary"); };
 	bconcat = function(bufs/*:Array<RawBytes>*/)/*:RawBytes*/ { return Buffer.isBuffer(bufs[0]) ? Buffer.concat(/*::(*/bufs/*:: :any)*/) : __bconcat(bufs); };
 }

@@ -6,6 +6,8 @@
 		"only-arrow-functions": false,
 		"no-consecutive-blank-lines": false,
 		"prefer-conditional-expression": false,
-		"one-variable-per-declaration": false
+		"one-variable-per-declaration": false,
+		"no-implicit-dependencies": false,
+		"prefer-template": false
 	}
 }

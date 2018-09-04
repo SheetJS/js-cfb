@@ -25,6 +25,8 @@ function cfb_add(cfb/*:CFBContainer*/, name/*:string*/, content/*:?RawBytes*/, o
 	file.size = content ? content.length : 0;
 	if(opts) {
 		if(opts.CLSID) file.clsid = opts.CLSID;
+		if(opts.mt) file.mt = opts.mt;
+		if(opts.ct) file.ct = opts.ct;
 	}
 	return file;
 }
