@@ -27,7 +27,7 @@ function build_full_paths(FI/*:CFBFileIndex*/, FP/*:Array<string>*/, Paths/*:Arr
 		do {
 			j = dad[j];
 			FP[i] = FP[j] + "/" + FP[i];
-		} while (j !== 0 && -1 !== dad[j]);
+		} while (j !== 0 && -1 !== dad[j] && i != j);
 		dad[i] = -1;
 	}
 

@@ -295,7 +295,7 @@ CRC32.str = crc32_str;
 /* [MS-CFB] v20171201 */
 var CFB = (function _CFB(){
 var exports/*:CFBModule*/ = /*::(*/{}/*:: :any)*/;
-exports.version = '1.1.0';
+exports.version = '1.1.1';
 /* [MS-CFB] 2.6.4 */
 function namecmp(l/*:string*/, r/*:string*/)/*:number*/ {
 	var L = l.split("/"), R = r.split("/");
@@ -490,7 +490,8 @@ function check_get_mver(blob/*:CFBlob*/)/*:[number, number]*/ {
 	blob.chk(HEADER_SIGNATURE, 'Header Signature: ');
 
 	// clsid 16
-	blob.chk(HEADER_CLSID, 'CLSID: ');
+	//blob.chk(HEADER_CLSID, 'CLSID: ');
+	blob.l += 16;
 
 	// minor version 2
 	var mver/*:number*/ = blob.read_shift(2, 'u');
@@ -556,7 +557,7 @@ function build_full_paths(FI/*:CFBFileIndex*/, FP/*:Array<string>*/, Paths/*:Arr
 		do {
 			j = dad[j];
 			FP[i] = FP[j] + "/" + FP[i];
-		} while (j !== 0 && -1 !== dad[j]);
+		} while (j !== 0 && -1 !== dad[j] && i != j);
 		dad[i] = -1;
 	}
 
