@@ -131,7 +131,7 @@ accept a `name` argument strictly deal with absolute file names:
   Set the option `{unsafe:true}` to skip existence checks (for bulk additions)
 - `.cfb_del(cfb, name)` deletes the specified file
 - `.cfb_mov(cfb, old_name, new_name)` moves the old file to new path and name
-- `.use_zlib(require("zlib"))` loads a nodejs zlib instance.
+- `.use_zlib(require("zlib"))` loads a nodejs `zlib` instance.
 
 By default, the library uses a pure JS inflate/deflate implementation.  NodeJS
 `zlib.InflateRaw` exposes the number of bytes read in versions after `8.11.0`.
@@ -169,7 +169,7 @@ granted by the Apache 2.0 License are reserved by the Original Author.
 
 ## References
 
- - [MS-CFB]: Compound File Binary File Format
- - ZIP `APPNOTE.TXT`: https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-6.3.4.TXT
+ - `MS-CFB`: Compound File Binary File Format
+ - ZIP `APPNOTE.TXT`: .ZIP File Format Specification
  - RFC1951: https://www.ietf.org/rfc/rfc1951.txt
 

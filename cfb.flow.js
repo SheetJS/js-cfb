@@ -295,7 +295,7 @@ CRC32.str = crc32_str;
 /* [MS-CFB] v20171201 */
 var CFB = (function _CFB(){
 var exports/*:CFBModule*/ = /*::(*/{}/*:: :any)*/;
-exports.version = '1.1.3';
+exports.version = '1.1.4';
 /* [MS-CFB] 2.6.4 */
 function namecmp(l/*:string*/, r/*:string*/)/*:number*/ {
 	var L = l.split("/"), R = r.split("/");
@@ -626,7 +626,9 @@ function make_sector_list(sectors/*:Array<RawBytes>*/, dir_start/*:number*/, fat
 		k = (i + dir_start); if(k >= sl) k-=sl;
 		if(chkd[k]) continue;
 		buf_chain = [];
+		var seen = [];
 		for(j=k; j>=0;) {
+			seen[j] = true;
 			chkd[j] = true;
 			buf[buf.length] = j;
 			buf_chain.push(sectors[j]);
@@ -635,6 +637,7 @@ function make_sector_list(sectors/*:Array<RawBytes>*/, dir_start/*:number*/, fat
 			if(ssz < 4 + jj) throw new Error("FAT boundary crossed: " + j + " 4 "+ssz);
 			if(!sectors[addr]) break;
 			j = __readInt32LE(sectors[addr], jj);
+			if(seen[j]) break;
 		}
 		sector_list[k] = ({nodes: buf, data:__toBuffer([buf_chain])}/*:SectorEntry*/);
 	}

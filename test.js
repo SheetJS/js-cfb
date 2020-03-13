@@ -213,8 +213,8 @@ describe('output formats', function() {
 			if(typeof r[1] != "string") throw new Error(r[0] + " binary write failed");
 			var good = false;
 			for(var i = 0; i < r[1].length; ++i) {
-				if(r[1].charCodeAt(i) == 0x00) good = true;
-				else if(r[1].charCodeAt(i) > 0xFF) { good = false; break; }
+				if(/*::((*/r[1]/*:: :any):string)*/.charCodeAt(i) == 0x00) good = true;
+				else if(/*::((*/r[1]/*:: :any):string)*/.charCodeAt(i) > 0xFF) { good = false; break; }
 			}
 			if(!good) throw new Error(r[0] + " binary write failed");
 		});
