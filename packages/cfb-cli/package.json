@@ -1,0 +1,17 @@
+{
+  "name": "cfb-cli",
+  "version": "1.0.0",
+  "description": "Command-line interface for cfb",
+  "bin": {
+    "cfb-cli": "./bin/cfb.njs"
+  },
+  "main": "index.js",
+  "author": "Garrett Luu",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "cfb": "^1.1.4",
+    "commander": "^5.1.0",
+    "fs": "0.0.1-security",
+    "printj": "^1.2.2"
+  }
+}
