@@ -23,7 +23,7 @@ export function writeFile(cfb: CFB$Container, filename: string, options?: CFB$Wr
 export const utils: CFB$Utils;
 
 export interface CFB$CommonOptions {
-    /** Input data encoding */
+    /** Data encoding */
     type?: 'base64' | 'binary' | 'buffer' | 'file' | 'array';
 
     /** If true, throw errors when features are not understood */
@@ -39,7 +39,7 @@ export interface CFB$ParsingOptions extends CFB$CommonOptions {
 /** Options for write and writeFile */
 export interface CFB$WritingOptions extends CFB$CommonOptions {
     /** Output file type */
-    fileType?: 'cfb' | 'zip';
+    fileType?: 'cfb' | 'zip' | 'mad';
 
     /** Override default root entry name (CFB only) */
     root?: string;
@@ -87,6 +87,9 @@ export interface CFB$Entry {
 
     /** Storage location -- see CFB$StorageType */
     storage?: string;
+
+    /** Content Type (used for MAD) */
+    ctype?: string;
 }
 
 /* File object */

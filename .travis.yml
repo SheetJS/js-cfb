@@ -1,5 +1,8 @@
 language: node_js
+dist: xenial
 node_js:
+  - "14"
+  - "13"
   - "12"
   - "11"
   - "10"
@@ -13,12 +16,15 @@ node_js:
   - "0.10"
   - "0.8"
 before_install:
-  - "npm install -g npm@4.3.0"
+  - "npm config set strict-ssl false"
+  - "./misc/node_version.sh"
   - "npm install -g mocha@2.x voc"
   - "npm install blanket"
-  - "npm install xlsjs crc-32"
+  - "npm install word crc-32"
   - "npm install coveralls mocha-lcov-reporter"
 before_script:
   - "make init"
+install:
+  - npm install
 after_success:
   - "make coveralls-spin"

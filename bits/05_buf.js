@@ -24,7 +24,7 @@ function new_unsafe_buf(len/*:number*/) {
 	/* jshint +W056 */
 }
 
-var s2a = function s2a(s/*:string*/)/*:any*/ {
+var s2a = function s2a(s/*:string*/)/*:RawBytes*/ {
 	if(has_buf) return Buffer_from(s, "binary");
 	return s.split("").map(function(x/*:string*/)/*:number*/{ return x.charCodeAt(0) & 0xff; });
 };

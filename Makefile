@@ -4,7 +4,7 @@ FMT=xls doc ppt misc full
 REQS=
 ADDONS=
 AUXTARGETS=xlscfb.js
-CMDS=bin/cfb.njs
+CMDS=packages/cfb-cli/bin/cfb.njs
 HTMLLINT=index.html
 
 ULIB=$(shell echo $(LIB) | tr a-z A-Z)

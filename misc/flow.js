@@ -95,5 +95,6 @@ type CFBEntry = {
 	R: number;
 	C: number;
 	content?: CFBlob;
+	ctype?: string;
 }
 */

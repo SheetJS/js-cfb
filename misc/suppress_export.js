@@ -16,4 +16,5 @@ declare var has_buf:boolean;
 declare var new_buf:any;
 declare var new_raw_buf:any;
 declare var new_unsafe_buf:any;
+declare var Buffer_from:any;
 */

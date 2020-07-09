@@ -13,10 +13,13 @@ function a2s(o/*:RawBytes*/)/*:string*/ {
 
 function write(cfb/*:CFBContainer*/, options/*:CFBWriteOpts*/)/*:RawBytes|string*/ {
 	var o = _write(cfb, options);
-	switch(options && options.type) {
+	switch(options && options.type || "buffer") {
 		case "file": get_fs(); fs.writeFileSync(options.filename, (o/*:any*/)); return o;
-		case "binary": return a2s(o);
-		case "base64": return Base64.encode(a2s(o));
+		case "binary": return typeof o == "string" ? o : a2s(o);
+		case "base64": return Base64.encode(typeof o == "string" ? o : a2s(o));
+		case "buffer": if(has_buf) return Buffer.isBuffer(o) ? o : Buffer_from(o);
+			/* falls through */
+		case "array": return typeof o == "string" ? s2a(o) : o;
 	}
 	return o;
 }
