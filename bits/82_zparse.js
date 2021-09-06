@@ -82,7 +82,7 @@ function parse_local_file(blob/*:CFBlob*/, csz/*:number*/, usz/*:number*/, o/*:C
 	var data = blob.slice(blob.l, blob.l + _csz);
 	switch(meth) {
 		case 8: data = _inflateRawSync(blob, _usz); break;
-		case 0: break;
+		case 0: break; // TODO: scan for magic number
 		default: throw new Error("Unsupported ZIP Compression method " + meth);
 	}
 

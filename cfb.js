@@ -277,7 +277,7 @@ CRC32.str = crc32_str;
 /* [MS-CFB] v20171201 */
 var CFB = (function _CFB(){
 var exports = {};
-exports.version = '1.2.0';
+exports.version = '1.2.1';
 /* [MS-CFB] 2.6.4 */
 function namecmp(l, r) {
 	var L = l.split("/"), R = r.split("/");
@@ -689,7 +689,11 @@ function read_file(filename, options) {
 }
 
 function read(blob, options) {
-	switch(options && options.type || "base64") {
+	var type = options && options.type;
+	if(!type) {
+		if(has_buf && Buffer.isBuffer(blob)) type = "buffer";
+	}
+	switch(type || "base64") {
 		case "file": return read_file(blob, options);
 		case "base64": return parse(s2a(Base64.decode(blob)), options);
 		case "binary": return parse(s2a(blob), options);
@@ -1081,6 +1085,38 @@ function read_bits_n(buf, bl, n) {
 	return v & f;
 }
 
+/* helpers for unaligned bit writes */
+function write_bits_3(buf, bl, v) { var w = bl & 7, h = bl >>> 3;
+	if(w <= 5) buf[h] |= (v & 7) << w;
+	else {
+		buf[h] |= (v << w) & 0xFF;
+		buf[h+1] = (v&7) >> (8-w);
+	}
+	return bl + 3;
+}
+
+function write_bits_1(buf, bl, v) {
+	var w = bl & 7, h = bl >>> 3;
+	v = (v&1) << w;
+	buf[h] |= v;
+	return bl + 1;
+}
+function write_bits_8(buf, bl, v) {
+	var w = bl & 7, h = bl >>> 3;
+	v <<= w;
+	buf[h] |=  v & 0xFF; v >>>= 8;
+	buf[h+1] = v;
+	return bl + 8;
+}
+function write_bits_16(buf, bl, v) {
+	var w = bl & 7, h = bl >>> 3;
+	v <<= w;
+	buf[h] |=  v & 0xFF; v >>>= 8;
+	buf[h+1] = v & 0xFF;
+	buf[h+2] = v >>> 8;
+	return bl + 16;
+}
+
 /* until ArrayBuffer#realloc is a thing, fake a realloc */
 function realloc(b, sz) {
 	var L = b.length, M = 2*L > sz ? 2*L : sz + 5, i = 0;
@@ -1094,7 +1130,7 @@ function realloc(b, sz) {
 	} else if(use_typed_arrays) {
 		var a = new Uint8Array(M);
 		if(a.set) a.set(b);
-		else for(; i < b.length; ++i) a[i] = b[i];
+		else for(; i < L; ++i) a[i] = b[i];
 		return a;
 	}
 	b.length = M;
@@ -1106,30 +1142,7 @@ function zero_fill_array(n) {
 	var o = new Array(n);
 	for(var i = 0; i < n; ++i) o[i] = 0;
 	return o;
-}var _deflate = (function() {
-var _deflateRaw = (function() {
-	return function deflateRaw(data, out) {
-		var boff = 0;
-		while(boff < data.length) {
-			var L = Math.min(0xFFFF, data.length - boff);
-			var h = boff + L == data.length;
-			/* TODO: this is only type 0 stored */
-			out.write_shift(1, +h);
-			out.write_shift(2, L);
-			out.write_shift(2, (~L) & 0xFFFF);
-			while(L-- > 0) out[out.l++] = data[boff++];
-		}
-		return out.l;
-	};
-})();
-
-return function(data) {
-	var buf = new_buf(50+Math.floor(data.length*1.1));
-	var off = _deflateRaw(data, buf);
-	return buf.slice(0, off);
-};
-})();
-/* modified inflate function also moves original read head */
+}
 
 /* build tree (used for literals and lengths) */
 function build_tree(clens, cmap, MAX) {
@@ -1169,6 +1182,7 @@ function build_tree(clens, cmap, MAX) {
 	return maxlen;
 }
 
+/* Fixed Huffman */
 var fix_lmap = use_typed_arrays ? new Uint16Array(512) : zero_fill_array(512);
 var fix_dmap = use_typed_arrays ? new Uint16Array(32)  : zero_fill_array(32);
 if(!use_typed_arrays) {
@@ -1188,7 +1202,123 @@ if(!use_typed_arrays) {
 	for(; i<=279; i++) clens.push(7);
 	for(; i<=287; i++) clens.push(8);
 	build_tree(clens, fix_lmap, 288);
+})();var _deflateRaw = (function() {
+	var DST_LN_RE = use_typed_arrays ? new Uint8Array(0x8000) : [];
+	for(var j = 0, k = 0; j < DST_LN.length; ++j) {
+		for(; k < DST_LN[j+1]; ++k) DST_LN_RE[k] = j;
+	}
+	for(;k < 32768; ++k) DST_LN_RE[k] = 29;
+
+	var LEN_LN_RE = use_typed_arrays ? new Uint8Array(0x102) : [];
+	for(j = 0, k = 0; j < LEN_LN.length; ++j) {
+		for(; k < LEN_LN[j+1]; ++k) LEN_LN_RE[k] = j;
+	}
+
+	function write_stored(data, out) {
+		var boff = 0;
+		while(boff < data.length) {
+			var L = Math.min(0xFFFF, data.length - boff);
+			var h = boff + L == data.length;
+			out.write_shift(1, +h);
+			out.write_shift(2, L);
+			out.write_shift(2, (~L) & 0xFFFF);
+			while(L-- > 0) out[out.l++] = data[boff++];
+		}
+		return out.l;
+	}
+
+	/* Fixed Huffman */
+	function write_huff_fixed(data, out) {
+		var bl = 0;
+		var boff = 0;
+		var addrs = use_typed_arrays ? new Uint16Array(0x8000) : [];
+		while(boff < data.length) {
+			var L = /* data.length - boff; */ Math.min(0xFFFF, data.length - boff);
+
+			/* write a stored block for short data */
+			if(L < 10) {
+				bl = write_bits_3(out, bl, +!!(boff + L == data.length)); // jshint ignore:line
+				if(bl & 7) bl += 8 - (bl & 7);
+				out.l = (bl / 8) | 0;
+				out.write_shift(2, L);
+				out.write_shift(2, (~L) & 0xFFFF);
+				while(L-- > 0) out[out.l++] = data[boff++];
+				bl = out.l * 8;
+				continue;
+			}
+
+			bl = write_bits_3(out, bl, +!!(boff + L == data.length) + 2); // jshint ignore:line
+			var hash = 0;
+			while(L-- > 0) {
+				var d = data[boff];
+				hash = ((hash << 5) ^ d) & 0x7FFF;
+
+				var match = -1, mlen = 0;
+
+				if((match = addrs[hash])) {
+					match |= boff & ~0x7FFF;
+					if(match > boff) match -= 0x8000;
+					if(match < boff) while(data[match + mlen] == data[boff + mlen] && mlen < 250) ++mlen;
+				}
+
+				if(mlen > 2) {
+					/* Copy Token  */
+					d = LEN_LN_RE[mlen];
+					if(d <= 22) bl = write_bits_8(out, bl, bitswap8[d+1]>>1) - 1;
+					else {
+						write_bits_8(out, bl, 3);
+						bl += 5;
+						write_bits_8(out, bl, bitswap8[d-23]>>5);
+						bl += 3;
+					}
+					var len_eb = (d < 8) ? 0 : ((d - 4)>>2);
+					if(len_eb > 0) {
+						write_bits_16(out, bl, mlen - LEN_LN[d]);
+						bl += len_eb;
+					}
+
+					d = DST_LN_RE[boff - match];
+					bl = write_bits_8(out, bl, bitswap8[d]>>3);
+					bl -= 3;
+
+					var dst_eb = d < 4 ? 0 : (d-2)>>1;
+					if(dst_eb > 0) {
+						write_bits_16(out, bl, boff - match - DST_LN[d]);
+						bl += dst_eb;
+					}
+					for(var q = 0; q < mlen; ++q) {
+						addrs[hash] = boff & 0x7FFF;
+						hash = ((hash << 5) ^ data[boff]) & 0x7FFF;
+						++boff;
+					}
+					L-= mlen - 1;
+				} else {
+					/* Literal Token */
+					if(d <= 143) d = d + 48;
+					else bl = write_bits_1(out, bl, 1);
+					bl = write_bits_8(out, bl, bitswap8[d]);
+					addrs[hash] = boff & 0x7FFF;
+					++boff;
+				}
+			}
+
+			bl = write_bits_8(out, bl, 0) - 1;
+		}
+		out.l = ((bl + 7)/8)|0;
+		return out.l;
+	}
+	return function _deflateRaw(data, out) {
+		if(data.length < 8) return write_stored(data, out);
+		return write_huff_fixed(data, out);
+	};
 })();
+
+function _deflate(data) {
+	var buf = new_buf(50+Math.floor(data.length*1.1));
+	var off = _deflateRaw(data, buf);
+	return buf.slice(0, off);
+}
+/* modified inflate function also moves original read head */
 
 var dyn_lmap = use_typed_arrays ? new Uint16Array(32768) : zero_fill_array(32768);
 var dyn_dmap = use_typed_arrays ? new Uint16Array(32768) : zero_fill_array(32768);
@@ -1308,8 +1438,8 @@ function inflate(data, usz) {
 			boff = dyn(data, boff);
 			max_len_1 = dyn_len_1; max_len_2 = dyn_len_2;
 		}
-		if(!usz && (OL < woff + 32767)) { outbuf = realloc(outbuf, woff + 32767); OL = outbuf.length; }
 		for(;;) { // while(true) is apparently out of vogue in modern JS circles
+			if(!usz && (OL < woff + 32767)) { outbuf = realloc(outbuf, woff + 32767); OL = outbuf.length; }
 			/* ingest code and move read head */
 			var bits = read_bits_n(data, boff, max_len_1);
 			var code = (header>>>1) == 1 ? fix_lmap[bits] : dyn_lmap[bits];
@@ -1340,7 +1470,7 @@ function inflate(data, usz) {
 				}
 
 				/* in the common case, manual byte copy is faster than TA set / Buffer copy */
-				if(!usz && OL < tgt) { outbuf = realloc(outbuf, tgt); OL = outbuf.length; }
+				if(!usz && OL < tgt) { outbuf = realloc(outbuf, tgt + 100); OL = outbuf.length; }
 				while(woff < tgt) { outbuf[woff] = outbuf[woff - dst]; ++woff; }
 			}
 		}
@@ -1439,7 +1569,7 @@ function parse_local_file(blob, csz, usz, o, EF) {
 	var data = blob.slice(blob.l, blob.l + _csz);
 	switch(meth) {
 		case 8: data = _inflateRawSync(blob, _usz); break;
-		case 0: break;
+		case 0: break; // TODO: scan for magic number
 		default: throw new Error("Unsupported ZIP Compression method " + meth);
 	}
 
@@ -1506,7 +1636,10 @@ function write_zip(cfb, options) {
 		start_cd += namebuf.length;
 		out.push(namebuf);
 
+		/* TODO: extra fields? */
+
 		/* TODO: encryption header ? */
+
 		start_cd += outbuf.length;
 		out.push(outbuf);
 
@@ -1765,7 +1898,8 @@ function write_mad(cfb, options) {
 	}
 	out.push(boundary + '--\r\n');
 	return out.join("\r\n");
-}function cfb_new(opts) {
+}
+function cfb_new(opts) {
 	var o = ({});
 	init_cfb(o, opts);
 	return o;

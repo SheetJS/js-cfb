@@ -4,6 +4,13 @@ This log is intended to keep track of backwards-incompatible changes, including
 but not limited to API changes and file location changes.  Minor behavioral
 changes may not be included if they are not expected to break existing code.
 
+## 1.2.1 (2021-09-06)
+
+* CFB write optimizations (h/t @rossj Ross Johnson)
+* `read` in NodeJS will treat `Buffer` input as type `"buffer"` by default
+* `deflate` / ZIP support fixed Huffman compression
+* `inflate` more aggressive reallocs
+
 ## 1.2.0 (2020-07-09)
 
 * Support for MAD file format (MIME aggregate document)

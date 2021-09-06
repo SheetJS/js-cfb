@@ -46,7 +46,10 @@ function write_zip(cfb/*:CFBContainer*/, options/*:CFBWriteOpts*/)/*:RawBytes*/ 
 		start_cd += namebuf.length;
 		out.push(namebuf);
 
+		/* TODO: extra fields? */
+
 		/* TODO: encryption header ? */
+
 		start_cd += outbuf.length;
 		out.push(outbuf);
 

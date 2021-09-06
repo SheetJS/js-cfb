@@ -74,6 +74,7 @@ name, if there are no slashes) and returns an entry object or null if not found.
 |------------|:----------------------------------------------------------------|
 | `"base64"` | string: Base64 encoding of the file                             |
 | `"binary"` | string: binary string (byte `n` is `data.charCodeAt(n)`)        |
+| `"buffer"` | nodejs Buffer                                                   |
 | `"file"`   | string: path of file that will be read (nodejs only)            |
 | (default)  | buffer or array of 8-bit unsigned int (byte `n` is `data[n]`)   |
 
@@ -88,6 +89,7 @@ name, if there are no slashes) and returns an entry object or null if not found.
 |------------|:----------------------------------------------------------------|
 | `"base64"` | string: Base64 encoding of the file                             |
 | `"binary"` | string: binary string (byte `n` is `data.charCodeAt(n)`)        |
+| `"buffer"` | nodejs Buffer                                                   |
 | `"file"`   | string: path of file that will be created (nodejs only)         |
 | (default)  | buffer if available, array of 8-bit unsigned int otherwise      |
 

@@ -1,64 +1,5 @@
 /* modified inflate function also moves original read head */
 
-/* build tree (used for literals and lengths) */
-function build_tree(clens, cmap, MAX/*:number*/)/*:number*/ {
-	var maxlen = 1, w = 0, i = 0, j = 0, ccode = 0, L = clens.length;
-
-	var bl_count  = use_typed_arrays ? new Uint16Array(32) : zero_fill_array(32);
-	for(i = 0; i < 32; ++i) bl_count[i] = 0;
-
-	for(i = L; i < MAX; ++i) clens[i] = 0;
-	L = clens.length;
-
-	var ctree = use_typed_arrays ? new Uint16Array(L) : zero_fill_array(L); // []
-
-	/* build code tree */
-	for(i = 0; i < L; ++i) {
-		bl_count[(w = clens[i])]++;
-		if(maxlen < w) maxlen = w;
-		ctree[i] = 0;
-	}
-	bl_count[0] = 0;
-	for(i = 1; i <= maxlen; ++i) bl_count[i+16] = (ccode = (ccode + bl_count[i-1])<<1);
-	for(i = 0; i < L; ++i) {
-		ccode = clens[i];
-		if(ccode != 0) ctree[i] = bl_count[ccode+16]++;
-	}
-
-	/* cmap[maxlen + 4 bits] = (off&15) + (lit<<4) reverse mapping */
-	var cleni = 0;
-	for(i = 0; i < L; ++i) {
-		cleni = clens[i];
-		if(cleni != 0) {
-			ccode = bit_swap_n(ctree[i], maxlen)>>(maxlen-cleni);
-			for(j = (1<<(maxlen + 4 - cleni)) - 1; j>=0; --j)
-				cmap[ccode|(j<<cleni)] = (cleni&15) | (i<<4);
-		}
-	}
-	return maxlen;
-}
-
-var fix_lmap = use_typed_arrays ? new Uint16Array(512) : zero_fill_array(512);
-var fix_dmap = use_typed_arrays ? new Uint16Array(32)  : zero_fill_array(32);
-if(!use_typed_arrays) {
-	for(var i = 0; i < 512; ++i) fix_lmap[i] = 0;
-	for(i = 0; i < 32; ++i) fix_dmap[i] = 0;
-}
-(function() {
-	var dlens/*:Array<number>*/ = [];
-	var i = 0;
-	for(;i<32; i++) dlens.push(5);
-	build_tree(dlens, fix_dmap, 32);
-
-	var clens/*:Array<number>*/ = [];
-	i = 0;
-	for(; i<=143; i++) clens.push(8);
-	for(; i<=255; i++) clens.push(9);
-	for(; i<=279; i++) clens.push(7);
-	for(; i<=287; i++) clens.push(8);
-	build_tree(clens, fix_lmap, 288);
-})();
-
 var dyn_lmap = use_typed_arrays ? new Uint16Array(32768) : zero_fill_array(32768);
 var dyn_dmap = use_typed_arrays ? new Uint16Array(32768) : zero_fill_array(32768);
 var dyn_cmap = use_typed_arrays ? new Uint16Array(128)   : zero_fill_array(128);
@@ -177,8 +118,8 @@ function inflate(data, usz/*:number*/) {
 			boff = dyn(data, boff);
 			max_len_1 = dyn_len_1; max_len_2 = dyn_len_2;
 		}
-		if(!usz && (OL < woff + 32767)) { outbuf = realloc(outbuf, woff + 32767); OL = outbuf.length; }
 		for(;;) { // while(true) is apparently out of vogue in modern JS circles
+			if(!usz && (OL < woff + 32767)) { outbuf = realloc(outbuf, woff + 32767); OL = outbuf.length; }
 			/* ingest code and move read head */
 			var bits = read_bits_n(data, boff, max_len_1);
 			var code = (header>>>1) == 1 ? fix_lmap[bits] : dyn_lmap[bits];
@@ -209,7 +150,7 @@ function inflate(data, usz/*:number*/) {
 				}
 
 				/* in the common case, manual byte copy is faster than TA set / Buffer copy */
-				if(!usz && OL < tgt) { outbuf = realloc(outbuf, tgt); OL = outbuf.length; }
+				if(!usz && OL < tgt) { outbuf = realloc(outbuf, tgt + 100); OL = outbuf.length; }
 				while(woff < tgt) { outbuf[woff] = outbuf[woff - dst]; ++woff; }
 			}
 		}

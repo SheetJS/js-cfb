@@ -53,6 +53,12 @@ Use readAsBinaryString: (when available) <input type="checkbox" name="userabs" c
 /* eslint no-use-before-define:0 */
 var global_cfb;
 
+if(!String.prototype.repeat) String.prototype.repeat = function(count) {
+  var o = "";
+  for(var i = 0; i < count; ++i) o += this;
+  return o;
+};
+
 var get_manifest = (function() {
 	var sprintf = PRINTJ.sprintf;
 	function fix_string(x/*:string*/)/*:string*/ { return x.replace(/[\u0000-\u001f]/, function($$) { return sprintf("\\u%04X", $$.charCodeAt(0)); }); }
@@ -99,20 +105,13 @@ var do_file = (function() {
 	var domrabs = document.getElementsByName("userabs")[0];
 	if(!rABS) domrabs.disabled = !(domrabs.checked = false);
 
-	function fixdata(data) {
-		var o = "", l = 0, w = 10240;
-		for(; l<data.byteLength/w; ++l) o+=String.fromCharCode.apply(null,new Uint8Array(data.slice(l*w,l*w+w)));
-		o+=String.fromCharCode.apply(null, new Uint8Array(data.slice(l*w)));
-		return o;
-	}
-
 	return function do_file(files) {
 		rABS = domrabs.checked;
 		var f = files[0];
 		var reader = new FileReader();
 		reader.onload = function(e) {
 			var data = e.target.result;
-			var cfb = CFB.read(rABS ? data : btoa(fixdata(data)), {type: rABS ? 'binary' : 'base64'});
+			var cfb = CFB.read(rABS ? data : new Uint8Array(data), {type: rABS ? 'binary' : 'buffer'});
 			process_data(cfb);
 		};
 		if(rABS) reader.readAsBinaryString(f);
@@ -161,7 +160,11 @@ var savefile = (function() {
 		if(typeof console !== 'undefined') console.log(global_cfb);
 		var data = CFB.write(global_cfb, {type:'binary', fileType: type});
 		if(typeof console !== 'undefined') console.log(data);
-		saveAs(new Blob([s2ab(data)],{type:"application/octet-stream"}), "SheetJSCFBDemo." + type);
+
+		var fname = "SheetJSCFBDemo." + type;
+		var blob = new Blob([s2ab(data)],{type:"application/octet-stream"});
+		if(typeof navigator !== 'undefined' && navigator.msSaveBlob) return navigator.msSaveBlob(blob, fname);
+		saveAs(blob, fname);
 	};
 })();
 
