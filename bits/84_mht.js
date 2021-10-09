@@ -88,7 +88,7 @@ function parse_quoted_printable(data/*:Array<string>*/)/*:RawBytes*/ {
 	}
 
 	/* decode */
-	for(var oi = 0; oi < o.length; ++oi) o[oi] = o[oi].replace(/=[0-9A-Fa-f]{2}/g, function($$) { return String.fromCharCode(parseInt($$.slice(1), 16)); });
+	for(var oi = 0; oi < o.length; ++oi) o[oi] = o[oi].replace(/[=][0-9A-Fa-f]{2}/g, function($$) { return String.fromCharCode(parseInt($$.slice(1), 16)); });
 	return s2a(o.join("\r\n"));
 }
 
