@@ -103,14 +103,12 @@ function inflate(data, usz/*:number*/) {
 			var sz = data[boff>>>3] | data[(boff>>>3)+1]<<8;
 			boff += 32;
 			/* push sz bytes */
-			if(!usz && OL < woff + sz) { outbuf = realloc(outbuf, woff + sz); OL = outbuf.length; }
-			if(typeof data.copy === 'function') {
-				// $FlowIgnore
-				data.copy(outbuf, woff, boff>>>3, (boff>>>3)+sz);
-				woff += sz; boff += 8*sz;
-			} else while(sz-- > 0) { outbuf[woff++] = data[boff>>>3]; boff += 8; }
+			if(sz > 0) {
+				if(!usz && OL < woff + sz) { outbuf = realloc(outbuf, woff + sz); OL = outbuf.length; }
+				while(sz-- > 0) { outbuf[woff++] = data[boff>>>3]; boff += 8; }
+			}
 			continue;
-		} else if((header >>> 1) == 1) {
+		} else if((header >> 1) == 1) {
 			/* Fixed Huffman */
 			max_len_1 = 9; max_len_2 = 5;
 		} else {
@@ -155,7 +153,8 @@ function inflate(data, usz/*:number*/) {
 			}
 		}
 	}
-	return [usz ? outbuf : outbuf.slice(0, woff), (boff+7)>>>3];
+	if(usz) return [outbuf, (boff+7)>>>3];
+	return [outbuf.slice(0, woff), (boff+7)>>>3];
 }
 
 function _inflate(payload, usz) {

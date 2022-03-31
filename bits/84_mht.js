@@ -27,7 +27,7 @@ function get_content_type(fi/*:CFBEntry*/, fp/*:string*/)/*:string*/ {
 
 /* 76 character chunks TODO: intertwine encoding */
 function write_base64_76(bstr/*:string*/)/*:string*/ {
-	var data = Base64.encode(bstr);
+	var data = Base64_encode(bstr);
 	var o = [];
 	for(var i = 0; i < data.length; i+= 76) o.push(data.slice(i, i+76));
 	return o.join("\r\n") + "\r\n";
@@ -108,7 +108,7 @@ function parse_mime(cfb/*:CFBContainer*/, data/*:Array<string>*/, root/*:string*
 	}
 	++di;
 	switch(cte.toLowerCase()) {
-		case 'base64': fdata = s2a(Base64.decode(data.slice(di).join(""))); break;
+		case 'base64': fdata = s2a(Base64_decode(data.slice(di).join(""))); break;
 		case 'quoted-printable': fdata = parse_quoted_printable(data.slice(di)); break;
 		default: throw new Error("Unsupported Content-Transfer-Encoding " + cte);
 	}

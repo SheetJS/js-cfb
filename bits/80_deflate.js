@@ -1,12 +1,13 @@
-var _deflateRaw = (function() {
+var _deflateRaw = /*#__PURE__*/(function _deflateRawIIFE() {
 	var DST_LN_RE = use_typed_arrays ? new Uint8Array(0x8000) : [];
-	for(var j = 0, k = 0; j < DST_LN.length; ++j) {
+	var j = 0, k = 0;
+	for(; j < DST_LN.length - 1; ++j) {
 		for(; k < DST_LN[j+1]; ++k) DST_LN_RE[k] = j;
 	}
 	for(;k < 32768; ++k) DST_LN_RE[k] = 29;
 
-	var LEN_LN_RE = use_typed_arrays ? new Uint8Array(0x102) : [];
-	for(j = 0, k = 0; j < LEN_LN.length; ++j) {
+	var LEN_LN_RE = use_typed_arrays ? new Uint8Array(0x103) : [];
+	for(j = 0, k = 0; j < LEN_LN.length - 1; ++j) {
 		for(; k < LEN_LN[j+1]; ++k) LEN_LN_RE[k] = j;
 	}
 

@@ -16,7 +16,7 @@ function write(cfb/*:CFBContainer*/, options/*:CFBWriteOpts*/)/*:RawBytes|string
 	switch(options && options.type || "buffer") {
 		case "file": get_fs(); fs.writeFileSync(options.filename, (o/*:any*/)); return o;
 		case "binary": return typeof o == "string" ? o : a2s(o);
-		case "base64": return Base64.encode(typeof o == "string" ? o : a2s(o));
+		case "base64": return Base64_encode(typeof o == "string" ? o : a2s(o));
 		case "buffer": if(has_buf) return Buffer.isBuffer(o) ? o : Buffer_from(o);
 			/* falls through */
 		case "array": return typeof o == "string" ? s2a(o) : o;
