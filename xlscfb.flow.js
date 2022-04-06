@@ -1,6 +1,4 @@
-var DO_NOT_EXPORT_CFB = true;
 /*::
-declare var Base64:any;
 declare var ReadShift:any;
 declare var CheckField:any;
 declare var prep_blob:any;
@@ -25,7 +23,6 @@ declare var Buffer_from:any;
 /*global module, require:false, process:false, Buffer:false, Uint8Array:false, Uint16Array:false */
 
 /*::
-declare var DO_NOT_EXPORT_CFB:?boolean;
 type SectorEntry = {
 	name?:string;
 	nodes?:Array<number>;
@@ -39,21 +36,18 @@ type SectorList = {
 }
 type CFBFiles = {[n:string]:CFBEntry};
 */
-/* crc32.js (C) 2014-present SheetJS -- http://sheetjs.com */
+/*! crc32.js (C) 2014-present SheetJS -- http://sheetjs.com */
 /* vim: set ts=2: */
 /*exported CRC32 */
-var CRC32;
-(function (factory) {
-	/*jshint ignore:start */
-	/*eslint-disable */
-	factory(CRC32 = {});
-	/*eslint-enable */
-	/*jshint ignore:end */
-}(function(CRC32) {
-CRC32.version = '1.2.0';
-/* see perf/crc32table.js */
+var CRC32 = /*#__PURE__*/(function() {
+var CRC32 = {};
+CRC32.version = '1.2.1';
+/*::
+type ABuf = Array<number> | Buffer | Uint8Array;
+type CRC32TableType = Array<number> | Int32Array;
+*/
 /*global Int32Array */
-function signed_crc_table()/*:any*/ {
+function signed_crc_table()/*:CRC32TableType*/ {
 	var c = 0, table/*:Array<number>*/ = new Array(256);
 
 	for(var n =0; n != 256; ++n){
@@ -72,78 +66,77 @@ function signed_crc_table()/*:any*/ {
 	return typeof Int32Array !== 'undefined' ? new Int32Array(table) : table;
 }
 
-var T = signed_crc_table();
-function crc32_bstr(bstr/*:string*/, seed/*:number*/)/*:number*/ {
-	var C = seed ^ -1, L = bstr.length - 1;
-	for(var i = 0; i < L;) {
-		C = (C>>>8) ^ T[(C^bstr.charCodeAt(i++))&0xFF];
-		C = (C>>>8) ^ T[(C^bstr.charCodeAt(i++))&0xFF];
+var T0 = signed_crc_table();
+function slice_by_16_tables(T) {
+	var c = 0, v = 0, n = 0, table/*:Array<number>*/ = typeof Int32Array !== 'undefined' ? new Int32Array(4096) : new Array(4096) ;
+
+	for(n = 0; n != 256; ++n) table[n] = T[n];
+	for(n = 0; n != 256; ++n) {
+		v = T[n];
+		for(c = 256 + n; c < 4096; c += 256) v = table[c] = (v >>> 8) ^ T[v & 0xFF];
 	}
-	if(i === L) C = (C>>>8) ^ T[(C ^ bstr.charCodeAt(i))&0xFF];
-	return C ^ -1;
+	var out = [];
+	for(n = 1; n != 16; ++n) out[n - 1] = typeof Int32Array !== 'undefined' ? table.subarray(n * 256, n * 256 + 256) : table.slice(n * 256, n * 256 + 256);
+	return out;
+}
+var TT = slice_by_16_tables(T0);
+var T1 = TT[0],  T2 = TT[1],  T3 = TT[2],  T4 = TT[3],  T5 = TT[4];
+var T6 = TT[5],  T7 = TT[6],  T8 = TT[7],  T9 = TT[8],  Ta = TT[9];
+var Tb = TT[10], Tc = TT[11], Td = TT[12], Te = TT[13], Tf = TT[14];
+function crc32_bstr(bstr/*:string*/, seed/*:?number*/)/*:number*/ {
+	var C = seed/*:: ? 0 : 0 */ ^ -1;
+	for(var i = 0, L = bstr.length; i < L;) C = (C>>>8) ^ T0[(C^bstr.charCodeAt(i++))&0xFF];
+	return ~C;
 }
 
-function crc32_buf(buf/*:Uint8Array|Array<number>*/, seed/*:number*/)/*:number*/ {
-	if(buf.length > 10000) return crc32_buf_8(buf, seed);
-	var C = seed ^ -1, L = buf.length - 3;
-	for(var i = 0; i < L;) {
-		C = (C>>>8) ^ T[(C^buf[i++])&0xFF];
-		C = (C>>>8) ^ T[(C^buf[i++])&0xFF];
-		C = (C>>>8) ^ T[(C^buf[i++])&0xFF];
-		C = (C>>>8) ^ T[(C^buf[i++])&0xFF];
-	}
-	while(i < L+3) C = (C>>>8) ^ T[(C^buf[i++])&0xFF];
-	return C ^ -1;
+function crc32_buf(B/*:ABuf*/, seed/*:?number*/)/*:number*/ {
+	var C = seed/*:: ? 0 : 0 */ ^ -1, L = B.length - 15, i = 0;
+	for(; i < L;) C =
+		Tf[B[i++] ^ (C & 255)] ^
+		Te[B[i++] ^ ((C >> 8) & 255)] ^
+		Td[B[i++] ^ ((C >> 16) & 255)] ^
+		Tc[B[i++] ^ (C >>> 24)] ^
+		Tb[B[i++]] ^ Ta[B[i++]] ^ T9[B[i++]] ^ T8[B[i++]] ^
+		T7[B[i++]] ^ T6[B[i++]] ^ T5[B[i++]] ^ T4[B[i++]] ^
+		T3[B[i++]] ^ T2[B[i++]] ^ T1[B[i++]] ^ T0[B[i++]];
+	L += 15;
+	while(i < L) C = (C>>>8) ^ T0[(C^B[i++])&0xFF];
+	return ~C;
 }
 
-function crc32_buf_8(buf/*:Uint8Array|Array<number>*/, seed/*:number*/)/*:number*/ {
-	var C = seed ^ -1, L = buf.length - 7;
-	for(var i = 0; i < L;) {
-		C = (C>>>8) ^ T[(C^buf[i++])&0xFF];
-		C = (C>>>8) ^ T[(C^buf[i++])&0xFF];
-		C = (C>>>8) ^ T[(C^buf[i++])&0xFF];
-		C = (C>>>8) ^ T[(C^buf[i++])&0xFF];
-		C = (C>>>8) ^ T[(C^buf[i++])&0xFF];
-		C = (C>>>8) ^ T[(C^buf[i++])&0xFF];
-		C = (C>>>8) ^ T[(C^buf[i++])&0xFF];
-		C = (C>>>8) ^ T[(C^buf[i++])&0xFF];
-	}
-	while(i < L+7) C = (C>>>8) ^ T[(C^buf[i++])&0xFF];
-	return C ^ -1;
-}
-
-function crc32_str(str/*:string*/, seed/*:number*/)/*:number*/ {
-	var C = seed ^ -1;
-	for(var i = 0, L=str.length, c, d; i < L;) {
+function crc32_str(str/*:string*/, seed/*:?number*/)/*:number*/ {
+	var C = seed/*:: ? 0 : 0 */ ^ -1;
+	for(var i = 0, L = str.length, c = 0, d = 0; i < L;) {
 		c = str.charCodeAt(i++);
 		if(c < 0x80) {
-			C = (C>>>8) ^ T[(C ^ c)&0xFF];
+			C = (C>>>8) ^ T0[(C^c)&0xFF];
 		} else if(c < 0x800) {
-			C = (C>>>8) ^ T[(C ^ (192|((c>>6)&31)))&0xFF];
-			C = (C>>>8) ^ T[(C ^ (128|(c&63)))&0xFF];
+			C = (C>>>8) ^ T0[(C ^ (192|((c>>6)&31)))&0xFF];
+			C = (C>>>8) ^ T0[(C ^ (128|(c&63)))&0xFF];
 		} else if(c >= 0xD800 && c < 0xE000) {
 			c = (c&1023)+64; d = str.charCodeAt(i++)&1023;
-			C = (C>>>8) ^ T[(C ^ (240|((c>>8)&7)))&0xFF];
-			C = (C>>>8) ^ T[(C ^ (128|((c>>2)&63)))&0xFF];
-			C = (C>>>8) ^ T[(C ^ (128|((d>>6)&15)|((c&3)<<4)))&0xFF];
-			C = (C>>>8) ^ T[(C ^ (128|(d&63)))&0xFF];
+			C = (C>>>8) ^ T0[(C ^ (240|((c>>8)&7)))&0xFF];
+			C = (C>>>8) ^ T0[(C ^ (128|((c>>2)&63)))&0xFF];
+			C = (C>>>8) ^ T0[(C ^ (128|((d>>6)&15)|((c&3)<<4)))&0xFF];
+			C = (C>>>8) ^ T0[(C ^ (128|(d&63)))&0xFF];
 		} else {
-			C = (C>>>8) ^ T[(C ^ (224|((c>>12)&15)))&0xFF];
-			C = (C>>>8) ^ T[(C ^ (128|((c>>6)&63)))&0xFF];
-			C = (C>>>8) ^ T[(C ^ (128|(c&63)))&0xFF];
+			C = (C>>>8) ^ T0[(C ^ (224|((c>>12)&15)))&0xFF];
+			C = (C>>>8) ^ T0[(C ^ (128|((c>>6)&63)))&0xFF];
+			C = (C>>>8) ^ T0[(C ^ (128|(c&63)))&0xFF];
 		}
 	}
-	return C ^ -1;
+	return ~C;
 }
-CRC32.table = T;
+CRC32.table = T0;
 CRC32.bstr = crc32_bstr;
 CRC32.buf = crc32_buf;
 CRC32.str = crc32_str;
-}));
+return CRC32;
+})();
 /* [MS-CFB] v20171201 */
-var CFB = (function _CFB(){
+var CFB = /*#__PURE__*/(function _CFB(){
 var exports/*:CFBModule*/ = /*::(*/{}/*:: :any)*/;
-exports.version = '1.2.1';
+exports.version = '1.2.2';
 /* [MS-CFB] 2.6.4 */
 function namecmp(l/*:string*/, r/*:string*/)/*:number*/ {
 	var L = l.split("/"), R = r.split("/");
@@ -443,7 +436,7 @@ function sleuth_fat(idx/*:number*/, cnt/*:number*/, sectors/*:Array<RawBytes>*/,
 			if((q = __readInt32LE(sector,i*4)) === ENDOFCHAIN) break;
 			fat_addrs.push(q);
 		}
-		sleuth_fat(__readInt32LE(sector,ssz-4),cnt - 1, sectors, ssz, fat_addrs);
+		if(cnt >= 1) sleuth_fat(__readInt32LE(sector,ssz-4),cnt - 1, sectors, ssz, fat_addrs);
 	}
 }
 
@@ -561,7 +554,7 @@ function read(blob/*:RawBytes|string*/, options/*:CFBReadOpts*/) {
 	}
 	switch(type || "base64") {
 		case "file": /*:: if(typeof blob !== 'string') throw "Must pass a filename when type='file'"; */return read_file(blob, options);
-		case "base64": /*:: if(typeof blob !== 'string') throw "Must pass a base64-encoded binary string when type='file'"; */return parse(s2a(Base64.decode(blob)), options);
+		case "base64": /*:: if(typeof blob !== 'string') throw "Must pass a base64-encoded binary string when type='file'"; */return parse(s2a(Base64_decode(blob)), options);
 		case "binary": /*:: if(typeof blob !== 'string') throw "Must pass a binary string when type='file'"; */return parse(s2a(blob), options);
 	}
 	return parse(/*::typeof blob == 'string' ? new Buffer(blob, 'utf-8') : */blob, options);
@@ -619,7 +612,9 @@ function rebuild_cfb(cfb/*:CFBContainer*/, f/*:?boolean*/)/*:void*/ {
 	for(i = 0; i < data.length; ++i) {
 		var dad = dirname(data[i][0]);
 		s = fullPaths[dad];
-		if(!s) {
+		while(!s) {
+			while(dirname(dad) && !fullPaths[dirname(dad)]) dad = dirname(dad);
+
 			data.push([dad, ({
 				name: filename(dad).replace("/",""),
 				type: 1,
@@ -627,8 +622,12 @@ function rebuild_cfb(cfb/*:CFBContainer*/, f/*:?boolean*/)/*:void*/ {
 				ct: now, mt: now,
 				content: null
 			}/*:any*/)]);
+
 			// Add name to set
 			fullPaths[dad] = true;
+
+			dad = dirname(data[i][0]);
+			s = fullPaths[dad];
 		}
 	}
 
@@ -676,7 +675,6 @@ function _write(cfb/*:CFBContainer*/, options/*:CFBWriteOpts*/)/*:RawBytes|strin
 		for(var i = 0; i < cfb.FileIndex.length; ++i) {
 			var file = cfb.FileIndex[i];
 			if(!file.content) continue;
-			/*:: if(file.content == null) throw new Error("unreachable"); */
 			var flen = file.content.length;
 			if(flen > 0){
 				if(flen < 0x1000) mini_size += (flen + 0x3F) >> 6;
@@ -767,6 +765,10 @@ function _write(cfb/*:CFBContainer*/, options/*:CFBWriteOpts*/)/*:RawBytes|strin
 		file = cfb.FileIndex[i];
 		if(i === 0) file.start = file.size ? file.start - 1 : ENDOFCHAIN;
 		var _nm/*:string*/ = (i === 0 && _opts.root) || file.name;
+		if(_nm.length > 32) {
+			console.error("Name " + _nm + " will be truncated to " + _nm.slice(0,32));
+			_nm = _nm.slice(0, 32);
+		}
 		flen = 2*(_nm.length+1);
 		o.write_shift(64, _nm, "utf16le");
 		o.write_shift(2, flen);
@@ -884,7 +886,7 @@ function write(cfb/*:CFBContainer*/, options/*:CFBWriteOpts*/)/*:RawBytes|string
 	switch(options && options.type || "buffer") {
 		case "file": get_fs(); fs.writeFileSync(options.filename, (o/*:any*/)); return o;
 		case "binary": return typeof o == "string" ? o : a2s(o);
-		case "base64": return Base64.encode(typeof o == "string" ? o : a2s(o));
+		case "base64": return Base64_encode(typeof o == "string" ? o : a2s(o));
 		case "buffer": if(has_buf) return Buffer.isBuffer(o) ? o : Buffer_from(o);
 			/* falls through */
 		case "array": return typeof o == "string" ? s2a(o) : o;
@@ -1074,15 +1076,16 @@ if(!use_typed_arrays) {
 	for(; i<=279; i++) clens.push(7);
 	for(; i<=287; i++) clens.push(8);
 	build_tree(clens, fix_lmap, 288);
-})();var _deflateRaw = (function() {
+})();var _deflateRaw = /*#__PURE__*/(function _deflateRawIIFE() {
 	var DST_LN_RE = use_typed_arrays ? new Uint8Array(0x8000) : [];
-	for(var j = 0, k = 0; j < DST_LN.length; ++j) {
+	var j = 0, k = 0;
+	for(; j < DST_LN.length - 1; ++j) {
 		for(; k < DST_LN[j+1]; ++k) DST_LN_RE[k] = j;
 	}
 	for(;k < 32768; ++k) DST_LN_RE[k] = 29;
 
-	var LEN_LN_RE = use_typed_arrays ? new Uint8Array(0x102) : [];
-	for(j = 0, k = 0; j < LEN_LN.length; ++j) {
+	var LEN_LN_RE = use_typed_arrays ? new Uint8Array(0x103) : [];
+	for(j = 0, k = 0; j < LEN_LN.length - 1; ++j) {
 		for(; k < LEN_LN[j+1]; ++k) LEN_LN_RE[k] = j;
 	}
 
@@ -1295,14 +1298,12 @@ function inflate(data, usz/*:number*/) {
 			var sz = data[boff>>>3] | data[(boff>>>3)+1]<<8;
 			boff += 32;
 			/* push sz bytes */
-			if(!usz && OL < woff + sz) { outbuf = realloc(outbuf, woff + sz); OL = outbuf.length; }
-			if(typeof data.copy === 'function') {
-				// $FlowIgnore
-				data.copy(outbuf, woff, boff>>>3, (boff>>>3)+sz);
-				woff += sz; boff += 8*sz;
-			} else while(sz-- > 0) { outbuf[woff++] = data[boff>>>3]; boff += 8; }
+			if(sz > 0) {
+				if(!usz && OL < woff + sz) { outbuf = realloc(outbuf, woff + sz); OL = outbuf.length; }
+				while(sz-- > 0) { outbuf[woff++] = data[boff>>>3]; boff += 8; }
+			}
 			continue;
-		} else if((header >>> 1) == 1) {
+		} else if((header >> 1) == 1) {
 			/* Fixed Huffman */
 			max_len_1 = 9; max_len_2 = 5;
 		} else {
@@ -1347,7 +1348,8 @@ function inflate(data, usz/*:number*/) {
 			}
 		}
 	}
-	return [usz ? outbuf : outbuf.slice(0, woff), (boff+7)>>>3];
+	if(usz) return [outbuf, (boff+7)>>>3];
+	return [outbuf.slice(0, woff), (boff+7)>>>3];
 }
 
 function _inflate(payload, usz) {
@@ -1594,7 +1596,7 @@ function get_content_type(fi/*:CFBEntry*/, fp/*:string*/)/*:string*/ {
 
 /* 76 character chunks TODO: intertwine encoding */
 function write_base64_76(bstr/*:string*/)/*:string*/ {
-	var data = Base64.encode(bstr);
+	var data = Base64_encode(bstr);
 	var o = [];
 	for(var i = 0; i < data.length; i+= 76) o.push(data.slice(i, i+76));
 	return o.join("\r\n") + "\r\n";
@@ -1655,7 +1657,7 @@ function parse_quoted_printable(data/*:Array<string>*/)/*:RawBytes*/ {
 	}
 
 	/* decode */
-	for(var oi = 0; oi < o.length; ++oi) o[oi] = o[oi].replace(/=[0-9A-Fa-f]{2}/g, function($$) { return String.fromCharCode(parseInt($$.slice(1), 16)); });
+	for(var oi = 0; oi < o.length; ++oi) o[oi] = o[oi].replace(/[=][0-9A-Fa-f]{2}/g, function($$) { return String.fromCharCode(parseInt($$.slice(1), 16)); });
 	return s2a(o.join("\r\n"));
 }
 
@@ -1675,7 +1677,7 @@ function parse_mime(cfb/*:CFBContainer*/, data/*:Array<string>*/, root/*:string*
 	}
 	++di;
 	switch(cte.toLowerCase()) {
-		case 'base64': fdata = s2a(Base64.decode(data.slice(di).join(""))); break;
+		case 'base64': fdata = s2a(Base64_decode(data.slice(di).join(""))); break;
 		case 'quoted-printable': fdata = parse_quoted_printable(data.slice(di)); break;
 		default: throw new Error("Unsupported Content-Transfer-Encoding " + cte);
 	}
@@ -1852,4 +1854,3 @@ exports.utils = {
 return exports;
 })();
 
-if(typeof require !== 'undefined' && typeof module !== 'undefined' && typeof DO_NOT_EXPORT_CFB === 'undefined') { module.exports = CFB; }

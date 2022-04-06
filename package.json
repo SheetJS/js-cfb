@@ -1,6 +1,6 @@
 {
   "name": "cfb",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "author": "sheetjs",
   "description": "Compound File Binary File Format extractor",
   "keywords": [
@@ -21,10 +21,16 @@
   },
   "devDependencies": {
     "@sheetjs/uglify-js": "~2.7.3",
-    "@types/commander": "^2.9.0",
     "@types/node": "^8.10.25",
+    "acorn": "7.4.1",
+    "alex": "8.1.1",
     "blanket": "~1.2.3",
     "dtslint": "~0.1.2",
+    "eslint": "7.23.0",
+    "eslint-plugin-html": "^6.1.2",
+    "eslint-plugin-json": "^2.1.2",
+    "jscs": "3.0.7",
+    "jshint": "2.13.4",
     "mocha": "~2.5.3",
     "typescript": "2.2.0"
   },

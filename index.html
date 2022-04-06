@@ -3,6 +3,7 @@
 <!-- vim: set ts=2: -->
 <html>
 <head>
+<meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <title>JS-CFB Live Demo</title>
 <style>
@@ -41,14 +42,12 @@ Use readAsBinaryString: (when available) <input type="checkbox" name="userabs" c
 <br />
 <script src="shim.js"></script>
 <script src="https://unpkg.com/printj/dist/printj.min.js"></script>
-<script src="cfb.js"></script>
-<script src="//rawgit.com/eligrey/Blob.js/master/Blob.js"></script>
-<script src="//unpkg.com/filesaver.js/FileSaver.js"></script>
+<script src="dist/cfb.min.js"></script>
 <script>
 /*jshint browser:true */
 /* eslint-env browser */
 /*global Uint8Array, ArrayBuffer */
-/*global CFB, out, PRINTJ, saveAs */
+/*global CFB, out, PRINTJ  */
 /* exported savefile, download_file */
 /* eslint no-use-before-define:0 */
 var global_cfb;
@@ -140,6 +139,14 @@ var do_file = (function() {
 	drop.addEventListener('drop', handleDrop, false);
 })();
 
+function saveAs(blob, fname) {
+	var url = URL.createObjectURL(blob);
+	var a = document.createElement("a");
+	a.download = fname; a.href = url; document.body.appendChild(a); a.click();
+	/*:: if(document.body == null) throw new Error("unreachable"); */ document.body.removeChild(a);
+	if(URL.revokeObjectURL && typeof setTimeout !== 'undefined') setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
+}
+
 var savefile = (function() {
 	var s2ab = function s2ab(s) {
 		var buf, i=0;
@@ -160,6 +167,8 @@ var savefile = (function() {
 		if(typeof console !== 'undefined') console.log(global_cfb);
 		var data = CFB.write(global_cfb, {type:'binary', fileType: type});
 		if(typeof console !== 'undefined') console.log(data);
+		var newcfb = CFB.read(data, {type:'binary'});
+		console.log(newcfb);
 
 		var fname = "SheetJSCFBDemo." + type;
 		var blob = new Blob([s2ab(data)],{type:"application/octet-stream"});
@@ -180,7 +189,9 @@ var download_file = (function() {
 		if(!global_cfb) return alert("Must load a file first!");
 		if(typeof console !== 'undefined') console.log(global_cfb);
 		var file = global_cfb.FileIndex[i], data = file.content;
-		saveAs(new Blob([a2ab(data)],{type:"application/octet-stream"}), file.name);
+		var blob = new Blob([a2ab(data)],{type:"application/octet-stream"});
+		if(typeof navigator !== 'undefined' && navigator.msSaveBlob) return navigator.msSaveBlob(blob, file.name);
+		saveAs(blob, file.name);
 	};
 })();
 	var _gaq = _gaq || [];

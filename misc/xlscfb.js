@@ -1,6 +1,4 @@
-var DO_NOT_EXPORT_CFB = true;
 /*::
-declare var Base64:any;
 declare var ReadShift:any;
 declare var CheckField:any;
 declare var prep_blob:any;

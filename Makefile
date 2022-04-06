@@ -31,7 +31,7 @@ bits/31_version.js: package.json
 
 .PHONY: clean
 clean: ## Remove targets and build artifacts
-	rm -f $(TARGET) $(FLOWTARGET)
+	rm -f $(TARGET) $(FLOWTARGET) xlscfb.js xlscfb.flow.js
 
 .PHONY: clean-data
 clean-data:
@@ -46,13 +46,15 @@ init: ## Initial setup for development
 
 .PHONY: dist
 dist: dist-deps $(TARGET) ## Prepare JS files for distribution
-	cp $(TARGET) dist/
+	mkdir -p dist
 	cp LICENSE dist/
+	cp $(TARGET) dist/
 	uglifyjs $(TARGET) $(UGLIFYOPTS) -o dist/$(LIB).min.js --source-map dist/$(LIB).min.map --preamble "$$(head -n 1 bits/00_header.js)"
 	misc/strip_sourcemap.sh dist/$(LIB).min.js
 
 .PHONY: dist-deps
 dist-deps: xlscfb.js ## Copy dependencies for distribution
+	mkdir -p dist
 	cp xlscfb.flow.js dist/xlscfb.js
 
 .PHONY: aux
@@ -61,15 +63,15 @@ aux: $(AUXTARGETS)
 .PHONY: xls
 xls: xlscfb.js
 
-XLSSKIP=bits/08_blob.js bits/04_base64.js bits/05_buf.js
-XLSDEPS=misc/suppress_export.js $(filter-out $(XLSSKIP),$(DEPS))
+XLSSKIP=bits/08_blob.js bits/04_base64.js bits/05_buf.js bits/98_exports.js
+XLSDEPS=misc/xlscfb.js $(filter-out $(XLSSKIP),$(DEPS))
 xlscfb.flow.js: $(XLSDEPS) ## Build support library
-	cat $^ | tr -d '\15\32' > $@
+	cat $^ | tr -d '\15\32' | grep -v DO_NOT_EXPORT_CFB > $@
 
 BYTEFILE=dist/cfb.min.js dist/xlscfb.js
 .PHONY: bytes
 bytes: ## Display minified and gzipped file sizes
-	for i in $(BYTEFILE); do printj "%-30s %7d %10d" $$i $$(wc -c < $$i) $$(gzip --best --stdout $$i | wc -c); done
+	for i in $(BYTEFILE); do npx printj "%-30s %7d %10d" $$i $$(wc -c < $$i) $$(gzip --best --stdout $$i | wc -c); done
 
 
 ## Testing
@@ -93,23 +95,23 @@ fullint: lint old-lint tslint flow mdlint ## Run all checks
 
 .PHONY: lint
 lint: $(TARGET) $(AUXTARGETS) ## Run eslint checks
-	@eslint --ext .js,.njs,.json,.html,.htm $(TARGET) $(CMDS) $(HTMLLINT) package.json
-	if [ -e $(CLOSURE) ]; then java -jar $(CLOSURE) $(REQS) $(FLOWTARGET) --jscomp_warning=reportUnknownTypes >/dev/null; fi
+	@./node_modules/.bin/eslint --ext .js,.njs,.json,.html,.htm $(TARGET) $(CMDS) $(HTMLLINT) package.json
+	@if [ -x "$(CLOSURE)" ]; then java -jar $(CLOSURE) $(REQS) $(FLOWTARGET) --jscomp_warning=reportUnknownTypes >/dev/null; fi
 
 .PHONY: old-lint
 old-lint: $(TARGET) $(AUXTARGETS) ## Run jshint and jscs checks
-	@jshint --show-non-errors $(TARGET) $(AUXTARGETS)
-	@jshint --show-non-errors $(CMDS)
-	@jshint --show-non-errors package.json test.js
-	@jshint --show-non-errors --extract=always $(HTMLLINT)
-	@jscs $(TARGET) $(AUXTARGETS) test.js
-	if [ -e $(CLOSURE) ]; then java -jar $(CLOSURE) $(REQS) $(FLOWTARGET) --jscomp_warning=reportUnknownTypes >/dev/null; fi
+	@./node_modules/.bin/jscs $(TARGET) $(AUXTARGETS) test.js
+	@./node_modules/.bin/jshint --show-non-errors $(TARGET) $(AUXTARGETS)
+	@./node_modules/.bin/jshint --show-non-errors $(CMDS)
+	@./node_modules/.bin/jshint --show-non-errors package.json test.js
+	@./node_modules/.bin/jshint --show-non-errors --extract=always $(HTMLLINT)
+	@if [ -x "$(CLOSURE)" ]; then java -jar $(CLOSURE) $(REQS) $(FLOWTARGET) --jscomp_warning=reportUnknownTypes >/dev/null; fi
 
 .PHONY: tslint
 tslint: $(TARGET) ## Run typescript checks
 	#@npm install dtslint typescript
 	#@npm run-script dtslint
-	dtslint types
+	./node_modules/.bin/dtslint types
 
 .PHONY: flow
 flow: lint ## Run flow checker
