@@ -22,7 +22,7 @@ With [npm](https://www.npmjs.org/package/cfb):
 $ npm install cfb
 ```
 
-The `xlscfb.js` file is designed to be embedded in [js-xlsx](http://git.io/xlsx)
+The `xlscfb.js` file is designed to be embedded in [js-xlsx](https://github.com/SheetJS/sheetjs)
 
 
 ## Library Usage
