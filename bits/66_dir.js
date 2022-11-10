@@ -9,9 +9,9 @@
 		file = cfb.FileIndex[i];
 		if(i === 0) file.start = file.size ? file.start - 1 : ENDOFCHAIN;
 		var _nm/*:string*/ = (i === 0 && _opts.root) || file.name;
-		if(_nm.length > 32) {
-			console.error("Name " + _nm + " will be truncated to " + _nm.slice(0,32));
-			_nm = _nm.slice(0, 32);
+		if(_nm.length > 31) {
+			console.error("Name " + _nm + " will be truncated to " + _nm.slice(0,31));
+			_nm = _nm.slice(0, 31);
 		}
 		flen = 2*(_nm.length+1);
 		o.write_shift(64, _nm, "utf16le");
